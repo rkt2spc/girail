@@ -1,0 +1,43 @@
+{
+  "name": "girail",
+  "version": "1.0.0",
+  "description": "Automation System: Reading Gmail and create tickets in Jira (Lol, that's how you got the name girail)",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^2.1.5",
+    "googleapis": "^18.0.0",
+    "jira-client": "^6.0.0",
+    "lodash": "^4.17.4",
+    "mongoose": "^4.9.0",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rocketspacer/girail.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rocketspacer/girail/issues"
+  },
+  "homepage": "https://github.com/rocketspacer/girail#readme",
+  "jshintConfig": {
+    "esversion": 6,
+    "eqeqeq": true,
+    "undef": true,
+    "nocomma": true,
+    "node": true,
+    "mocha": true,
+    "predef": [
+      "Utils",
+      "Configs",
+      "App"
+    ]
+  }
+}
