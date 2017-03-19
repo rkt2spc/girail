@@ -5,11 +5,9 @@ var core = require('./core');
 exports.handle = function (event, callback) {
 
     database.connect()
-        .then(() => Promise.resolve({ event: event }))
+        .then()
         // Step 1:
-        .then(core.extractEventData)
         // STEP 2:
-        .then(core.updateEventRecords)
         // STEP 3:
         .then(gmail.retrieveAddedMessages)
         // STEP 4:

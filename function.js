@@ -26,4 +26,6 @@ exports.handle = function (event, callback) {
         .then(jira.createComments)
         // STEP 10:
         .then(jira.uploadAttachments)
+        // STEP 11:
+        
 };
