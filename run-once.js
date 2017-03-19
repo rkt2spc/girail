@@ -113,8 +113,6 @@ var acquireAuthToken = function (oauth2Client) {
 };
 
 //========================================================================================================
-// database.disconnect();
-// database.connect()
 Promise.resolve(true)
     .then(loadCredentials)
     .then(createAuthClient)
@@ -123,13 +121,23 @@ Promise.resolve(true)
         var gmail = new GMailProcessor(authClient);
         // var jira = new Jira();
 
+        gmail.GMailService.users.messages.get({
+            userId: 'me',
+            id: '15ab88581bd42a17'
+        }, (err, response) => {
+            if (err) return console.log(err.code);
+            console.log(response);
+        })
+
+        return;
+
         return gmail.registerWatch({ 
             userId: 'me', 
             resource: { topicName: Configs.PUBSUB_TOPIC }
         })
         .then((response) => {
             fs.writeFileSync("./credentials/events-conf.json", JSON.stringify({
-                watchHistoryId: Number(response.historyId)
+                seedHistoryId: Number(response.historyId)
             }));
             return response;
         })

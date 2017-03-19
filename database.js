@@ -14,32 +14,20 @@ var Event = require('./models/Event');
 var Mapping = require('./models/Mapping');
 
 //------------------------------------------------------------------------
+var connectPromise = new Promise((fulfill, reject) => {
+    mongoose.connect(configs.database_url, (err) => {
+        if (err) reject(err);
+        else fulfill();
+    });
+});
+
+//------------------------------------------------------------------------
 // Database Object
 var databaseObject = {
 
     // Connect to database
     connect: function (callback) {
-
-        var promise = new Promise((fulfill, reject) => {
-            mongoose.connect(configs.database_url, (err) => {
-                if (err) reject(err);
-                else fulfill();
-            });
-        });
-
-        //-------------------------
-        return helpers.wrapAPI(promise, callback);
-    },
-    disconnect: function (callback) {
-        var promise = new Promise((fulfill, reject) => {
-            mongoose.disconnect((err) => {
-                if (err) reject(err);
-                else fulfill();
-            });
-        });
-
-        //-------------------------
-        return helpers.wrapAPI(promise, callback);
+        return helpers.wrapAPI(connectPromise, callback);
     },
 
     /**********************************************************************
