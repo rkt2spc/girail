@@ -16,16 +16,14 @@ var sqs = new AWS.SQS({
 });
 
 //========================================================================================================
-var Configs = {
-    QUEUE_URL: "https://sqs.us-west-2.amazonaws.com/071045926576/test-q"
-};
+var Configs = require('./credentials/aws-conf.json');
 //========================================================================================================
 
 //========================================================================================================
 const Consumer = require('sqs-consumer');
 const app = Consumer.create({
     sqs: sqs,
-    queueUrl: Configs.QUEUE_URL,
+    queueUrl: Configs.queue_url,
     visibilityTimeout: 1800,
     waitTimeSeconds: 20,
     handleMessage: (message, done) => {
@@ -69,7 +67,7 @@ const app = Consumer.create({
                     // re-enqueue message
                     sqs.sendMessage({
                         MessageBody: JSON.stringify(gmailMessage),
-                        QueueUrl: Configs.QUEUE_URL
+                        QueueUrl: Configs.queue_url
                     }, (err, data) => {
 
                         // Can't re-enqueue

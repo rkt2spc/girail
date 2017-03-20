@@ -10,9 +10,7 @@ var sqs = new AWS.SQS({
 });
 
 //========================================================================================================
-var Configs = {
-    QUEUE_URL: "https://sqs.us-west-2.amazonaws.com/071045926576/test-q"
-};
+var Configs = require('./credentials/aws-conf.json');
 
 //========================================================================================================
 gmail.retrieveUnprocessedMessages((err, messages) => {
@@ -33,7 +31,7 @@ gmail.retrieveUnprocessedMessages((err, messages) => {
             console.log(`Processing message ${message.id}`);
             sqs.sendMessage({
                 MessageBody: JSON.stringify(message),
-                QueueUrl: Configs.QUEUE_URL
+                QueueUrl: Configs.queue_url
             }, (err, data) => {
 
                 // Can't enqueue
