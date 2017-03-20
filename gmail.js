@@ -109,8 +109,42 @@ exports.markMessageUnprocessible = function (message, callback) {
             {
                 userId: 'me',
                 id: message.id,
-                addLabelIds: [LABELS['Unprocessible']],
-                removeLabelIds: [LABELS['Unprocessed']]
+                resource: {
+                    addLabelIds: [LABELS['Unprocessible']],
+                    removeLabelIds: [LABELS['Unprocessed']]
+                }
+            },
+            // Callback
+            (err) => {
+                if (err) return reject(err);
+                fulfill();
+            }
+        );
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Mark messages Unprocessible
+exports.markMessageProcessed = function (message, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        // if (!message || !message.id)
+
+        //-------------------------
+        gmailService.users.messages.modify(
+            // Modify params
+            {
+                userId: 'me',
+                id: message.id,
+                resource: {
+                    addLabelIds: [LABELS['Enqueued']],
+                    removeLabelIds: [LABELS['Processed']]
+                }
             },
             // Callback
             (err) => {
@@ -173,4 +207,7 @@ exports.getAttachment = function (params, callback) {
             fulfill(data);
         });
     });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
 };

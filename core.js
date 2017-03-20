@@ -178,7 +178,7 @@ exports.createJiraEntity = function (message, callback) {
             // Find Reply Source
             database.findReplySourceMapping(message, (err, mapping) => {
                 if (err) return reject(err);
-                
+
                 // Assign Reply Source Issue
                 message.issueId = mapping.issueId;
                 message.issueKey = mapping.issueKey;
@@ -217,14 +217,14 @@ exports.updateMapping = function (message, callback) {
 };
 
 //========================================================================================================
-// Add attchments
+// Add attachments
 exports.addAttachments = function (message, callback) {
 
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
 
         if (!message.attachments || message.attachments.length === 0)
-            return fulfill(message);
+            return fulfill(message);            
 
         //-------------------------
         async.eachSeries(message.attachments, (attachment, cb) => {
@@ -233,6 +233,7 @@ exports.addAttachments = function (message, callback) {
                 attachmentId: attachment.id
             }, (err, data) => {
 
+                console.log(`Attachment Buffered ${attachment.filename}`);
                 jira.uploadAttachment({
                     issueId: message.issueId,
                     filename: attachment.filename,
@@ -240,10 +241,31 @@ exports.addAttachments = function (message, callback) {
                     data: data
                 }, (err) => {
                     if (err) return cb(err);
+                    console.log(`Attachment Uploaded ${attachment.filename}`);
                     cb(null);
                 });
             });
         }, (err) => {
+            if (err) return reject(err);
+            fulfill(message);
+        });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Mark message processed
+exports.markMessageProcessed = function (message, callback) {
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        if (!message.attachments || message.attachments.length === 0)
+            return fulfill(message);
+
+        //-------------------------
+        gmail.markMessageProcessed(message, (err) => {
             if (err) return reject(err);
             fulfill(message);
         });

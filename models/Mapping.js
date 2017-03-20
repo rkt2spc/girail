@@ -16,7 +16,7 @@ var mappingSchema = mongoose.Schema({
     reconstructMetadata : { type: String }
 });
 
-mappingSchema.index({messageId: 1, threadId: 1}, {unique: true});
+mappingSchema.index({messageId: 1}, {unique: true});
 
 //------------------------------------------------------------------------
 // Schema Statics

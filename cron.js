@@ -20,6 +20,7 @@ gmail.retrieveUnprocessedMessages((err, messages) => {
     if (messages.length === 0)
         return console.log('Done, nothing to process');
 
+    messages.reverse();
     console.log(`Begin processing ${messages.length} messages`);
     console.log('==================================================');
     // Perform iterating asynchronously
@@ -43,7 +44,7 @@ gmail.retrieveUnprocessedMessages((err, messages) => {
                 }
 
                 console.log(`Message ${message.id} enqueued`);
-                // Mark message processed
+                // Mark message enqueued
                 gmail.markMessageEnqueued(message, (err) => {
                     
                     if (err) {

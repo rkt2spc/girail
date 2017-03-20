@@ -26,13 +26,16 @@ const Consumer = require('sqs-consumer');
 const app = Consumer.create({
     sqs: sqs,
     queueUrl: Configs.QUEUE_URL,
-    visibilityTimeout: 5,
-    waitTimeSeconds: 6,
+    visibilityTimeout: 1800,
+    waitTimeSeconds: 20,
     handleMessage: (message, done) => {
 
-        if (!message || !message.Body) return done();
+        if (!message || !message.Body) {
+            console.log('Consuming messages...');
+            return done();
+        }
+        
         var gmailMessage = JSON.parse(message.Body);
-
         console.log('======================================================');
         console.log(`Processing message ${gmailMessage.id}`);
         database.connect()
@@ -60,7 +63,7 @@ const app = Consumer.create({
             })
             .catch((err) => {
 
-                if (err instanceof AppError && err.code === '1') {
+                if (err instanceof AppError && err.code === '0') {
                     console.log(`Encounter out of order processing, reply message ${message.id} was received before any subject message`);
                     // re-enqueue message
                     sqs.sendMessage({
@@ -74,12 +77,15 @@ const app = Consumer.create({
                             return done(err);
                         }
 
+                        done();
                         console.log(`Message ${gmailMessage.id} re-enqueued`);
                     });
                 }
+                else {
+                    console.log(err.message);
+                    done(err);
+                }
 
-                console.log(err.message);
-                done(err);
             });
     }
 });
