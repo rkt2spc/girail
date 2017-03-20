@@ -6,7 +6,6 @@ var OAuth2 = google.auth.OAuth2;
 
 //========================================================================================================
 var Configs = {
-    PUBSUB_TOPIC: 'projects/project-girail-161114/topics/mail',
     CREDENTIALS_PATH: process.env.CREDENTIALS_PATH || path.join(__dirname, 'credentials', 'oauth-secret.json'),
     TOKEN_PATH: process.env.TOKEN_PATH || path.join(__dirname, 'credentials', 'access-token.json'),
     SCOPES: ['https://mail.google.com/']
@@ -16,8 +15,6 @@ var Configs = {
 var database = require('./database');
 
 //========================================================================================================
-var GMailProcessor = require('./processors/GMailProcessor');
-// var Jira = require('./JiraProcessor');
 
 //========================================================================================================
 // Load setCredentials
@@ -118,29 +115,10 @@ Promise.resolve(true)
     .then(createAuthClient)
     .then(acquireAuthToken)
     .then((authClient) => {
-        var gmail = new GMailProcessor(authClient);
-        // var jira = new Jira();
-
-        gmail.GMailService.users.messages.get({
-            userId: 'me',
-            id: '15ab88581bd42a17'
-        }, (err, response) => {
-            if (err) return console.log(err.code);
-            console.log(response);
-        })
-
-        return;
-
-        return gmail.registerWatch({ 
-            userId: 'me', 
-            resource: { topicName: Configs.PUBSUB_TOPIC }
-        })
-        .then((response) => {
-            fs.writeFileSync("./credentials/events-conf.json", JSON.stringify({
-                seedHistoryId: Number(response.historyId)
-            }));
-            return response;
-        })
-        .then((setting) => console.log('Watch Register Successful:', setting));
+        console.log('OK! OAuth2 credentials updated!');
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+        console.log('Failed to retrieve OAuth2 credentials');
+        console.log(err);
+    })
+    .then(() => process.exit(0));

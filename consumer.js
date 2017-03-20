@@ -34,7 +34,7 @@ const app = Consumer.create({
             console.log('Consuming messages...');
             return done();
         }
-        
+
         var gmailMessage = JSON.parse(message.Body);
         console.log('======================================================');
         console.log(`Processing message ${gmailMessage.id}`);
@@ -54,9 +54,10 @@ const app = Consumer.create({
             .then(helpers.logStatus('Create Jira entity', 'Done'))
             .then(core.updateMapping)
             .then(helpers.logStatus('Update mapping', 'Done'))
-            .then(core.addAttachments)
-            .then(helpers.logStatus('Add attachments', 'Done'))
+            .then(core.uploadAttachments)
+            .then(helpers.logStatus('Upload attachments', 'Running in background'))
             .then(core.markMessageProcessed)
+            .then(helpers.logStatus('Mark message processed', 'Done'))            
             .then(() => {
                 console.log(`Finished processing message ${gmailMessage.id}`);
                 done();

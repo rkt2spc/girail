@@ -217,8 +217,8 @@ exports.updateMapping = function (message, callback) {
 };
 
 //========================================================================================================
-// Add attachments
-exports.addAttachments = function (message, callback) {
+// Upload attachments
+exports.uploadAttachments = function (message, callback) {
 
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
@@ -261,9 +261,6 @@ exports.markMessageProcessed = function (message, callback) {
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
 
-        if (!message.attachments || message.attachments.length === 0)
-            return fulfill(message);
-
         //-------------------------
         gmail.markMessageProcessed(message, (err) => {
             if (err) return reject(err);
@@ -274,5 +271,3 @@ exports.markMessageProcessed = function (message, callback) {
     //-------------------------
     return helpers.wrapAPI(promise, callback);
 };
-
-
