@@ -2,11 +2,14 @@
 // Dependencies
 var async = require('async');
 var JiraApi = require('jira-client');
+var helpers = require('./helpers');
 var database = require('./database');
-var AppError = require('./errors').AppError;
 
 //========================================================================================================
 // Credentials
+const DEFAULT_PROJECT = 'SAM';
+const DEFAULT_ISSUE_TYPE = "Task";
+const DEFAULT_REPORTER = "admin";
 
 //========================================================================================================
 // Jira Service
@@ -20,71 +23,27 @@ var jiraService = new JiraApi({
 });
 
 //========================================================================================================
-// Retrieve Added Messages: params: { lastHistoryId, newHistoryId }
-exports.createIssue = function (params, callback) {
+// Create issue
+exports.createIssue = function (message, callback) {
     //-------------------------        
     var promise = new Promise((fulfill, reject) => {
 
-        //-------------------------        
-        if (!params || !params.historyId)
-            return reject(new Error(`RetrieveAddedMessages: Missing parameters, got ${params}`));
-
-        if (params.historyId <= 0)
-            return reject(new Error(`RetrieveAddedMessages: Invalid historyId, expected > 0, got ${params.historyId}`));
-
         //-------------------------
-        async.waterfall([
-            function (next) {
-                gmailService.users.history.list({
-                    userId: 'me',
-                    historyTypes: 'messageAdded',
-                    startHistoryId: params.historyId
+        jiraService.addNewIssue({
+            fields: {
+                project: { key: message.project.key },
+                summary: message.subject,
+                description: message.content,
+                issuetype: {
+                    name: DEFAULT_ISSUE_TYPE
                 },
-                    function (err, response) {
-                        if (err) return next(err);
-                        if (!response.history || response.history.length === 0)
-                            return next(new Error(`RetrieveAddedMessages: No events happen since provided historyId ${params.historyId}`));
-
-                        var histories = lodash.chain(response.histories)
-                            .filter((h) => h.id < params.newHistoryId && h.messagesAdded && h.messagesAdded.length > 0)
-                            .map((h) => h.messagesAdded)
-                            .flattenDeep()
-                            .uniqBy('message.id')
-                            .map((h) => h.message);
-
-                        next(null, messages);
-                    });
-            },
-            function (addedMessages, next) {
-                async.reduce(addedMessages, [], (memo, message, done) => {
-                    gmailService.users.messages.get({
-                        userId: 'me',
-                        id: message.id,
-                        format: 'full',
-                        metadataHeaders: METADATA_HEADERS
-                    }, (err, detailedMessage) => {
-                        if (err && err.code !== 404) return done(err);
-
-                        if (!err)
-                            memo.push(detailedMessage);
-                        else
-                            console.log(`RetrieveAddedMessages: Can't get message detail, of message ${message.id}`);
-
-                        done(null, memo);
-                    });
-
-                }, (err, detailedMessages) => {
-                    if (err) return next(err);
-                    next(null, detailedMessages);
-                });
+                reporter: {
+                    name: DEFAULT_REPORTER
+                }
             }
-        ], (err, addedDetailedMessages) => {
-            if (err) return reject(err);
-            fulfill({
-                messages: addedDetailedMessages
-            });
-        });
-
+        })
+            .then((issue) => fulfill(issue))
+            .catch((err) => reject(err));
     });
 
     //-------------------------        
@@ -92,5 +51,44 @@ exports.createIssue = function (params, callback) {
 };
 
 //========================================================================================================
-// Retrieve Added Messages: params: { lastHistoryId, newHistoryId }
+// Create comment
+exports.createComment = function (replyMessage, callback) {
 
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        jiraService.addComment(replyMessage.issueId, replyMessage.content)
+            .then((comment) => fulfill(comment))
+            .catch((err) => reject(err));
+    });
+
+    //-------------------------        
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Upload attachment
+exports.uploadAttachment = function (params, callback) {
+
+    var issueId = params.issueId;
+    var filename = params.filename;
+    var mimeType = params.mimeType;
+    var data = params.data;
+
+    //-------------------------    
+    var promise = new Promise((fulfill, reject) => {
+
+        jiraService.addAttachmentOnIssue(issueId, {
+            value: data,
+            options: {
+                filename: filename,
+                contentType: mimeType
+            }
+        })
+            .then((res) => fulfill())
+            .catch((err) => reject(err));
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);    
+};

@@ -1,6 +1,7 @@
 //------------------------------------------------------------------------
 // Dependencies
 var helpers = require('./helpers');
+var AppError = require('./errors/AppError.js');
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise; //Use native ES6 Promise instead of Mongoose's default
 
@@ -10,99 +11,99 @@ var configs = require('./credentials/database-conf.json');
 
 //------------------------------------------------------------------------
 // Models
-var Event = require('./models/Event');
 var Mapping = require('./models/Mapping');
 
 //------------------------------------------------------------------------
 var connectPromise = new Promise((fulfill, reject) => {
-    mongoose.connect(configs.database_url, (err) => {
+    mongoose.connect('mongodb://localhost/test-db', (err) => {
         if (err) reject(err);
         else fulfill();
     });
 });
 
 //------------------------------------------------------------------------
-// Database Object
-var databaseObject = {
+exports.connect = function (callback) {
 
-    // Connect to database
-    connect: function (callback) {
-        return helpers.wrapAPI(connectPromise, callback);
-    },
-
-    /**********************************************************************
-    * Database APIs                                                       *
-    **********************************************************************/
-    // Event APIs
-    getLatestEvent: function (callback) {
-        // historyId is an index, no sorting really happen
-        // automatically optimize under mongodb
-        Event
-            .find()
-            .sort({ historyId: -1 })
-            .limit(1)
-            .exec((err, results) => {
-                if (err) return callback(err);
-                if (results.length === 0) return callback(null, null);
-                callback(null, results[0]);
-            });
-    },
-    addNewEvent: function (params, callback) {
-        var event = new Event({
-            historyId: params.historyId
-        });
-
-        event.save((err) => {
-            if (err) return callback(err);
-            callback(null, event);
-        });
-    },
-
-    // Message APIs
-    markMessageProcessing: function (message, callback) {
-        var mapping = new Mapping({
-            messageId: message.id
-        });
-
-        mapping.save((err) => {
-            if (err) return callback(err);
-            callback(null, mapping);
-        });
-    },
-    updateMessageMapping: function (message, callback) {
-        Mapping
-            .findOne({ messageId: message.id })
-            .exec((err, mapping) => {
-                if (err) return callback(err);
-                if (!mapping) return callback(new Error('No mapping found'));
-
-                mapping.emailId = message.emailId;
-                if (message.issue) {
-                    mapping.issueId = message.issue.id;
-                    mapping.issueKey = message.issue.key;
-                }
-
-                if (message.comment)
-                    mapping.commentid = message.comment.id;
-
-                mapping.save((e) => {
-                    if (e) return callback(e);
-                    callback(null, mapping);
-                });
-            });
-    },
-    getReplyMessageIssue: function (message, callback) {
-        Mapping
-            .findOne({ emailId: message.rootReply })
-            .exec((err, mapping) => {
-                if (err) return callback(err);
-                if (!mapping) return callback(new Error('No mapping found for message rootReply'));
-
-                callback(null, { id: mapping.issueId, key: mapping.issueKey });
-            });
-    }
+    //-------------------------    
+    return helpers.wrapAPI(connectPromise, callback);
 };
 
 //------------------------------------------------------------------------
-// Exports
-module.exports = databaseObject;
+exports.findReplySourceMapping = function (replyMessage, callback) {
+
+    var promise = new Promise((fulfill, reject) => {
+        Mapping
+            .findOne({ threadId: replyMessage.threadId, issueId: { $exists: true, $ne: null } })
+            .exec((err, mapping) => {
+                if (err) return reject(err);
+                if (!mapping)
+                    return reject(new AppError({ code: 0, name: 'Empty Entry', message: 'Reply Source Unavailable'}));
+                
+                fulfill(mapping);
+            });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//------------------------------------------------------------------------
+exports.createMapping = function (message, callback) {
+
+    var promise = new Promise((fulfill, reject) => {
+        var mapping = new Mapping({
+            messageId: message.id,
+            threadId: message.threadId
+        });
+
+        mapping.save((err) => {
+            if (err) return reject(err);
+            fulfill(mapping);
+        });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//------------------------------------------------------------------------
+exports.updateMapping = function (message, callback) {
+
+    var promise = new Promise((fulfill, reject) => {
+        Mapping
+            .findOne({ messageId: message.id, threadId: message.threadId })
+            .exec((err, mapping) => {
+                if (err) return reject(err);
+
+                // if (!mapping) // TO_DO
+
+
+                mapping.issueId = message.issueId;
+                mapping.issueKey = message.issueKey;
+                mapping.commentId = message.commentId;
+                mapping.save((err) => {
+                    if (err) return reject(err);
+                    fulfill(mapping);
+                });
+            });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//------------------------------------------------------------------------
+exports.getMapping = function (message, callback) {
+
+    var promise = new Promise((fulfill, reject) => {
+        Mapping
+            .findOne({ messageId: message.id, threadId: message.threadId })
+            .exec((err, mapping) => {
+                if (err) return reject(err);
+                fulfill(mapping);
+            });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};

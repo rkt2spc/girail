@@ -2,245 +2,272 @@
 // Dependencies
 var async = require('async');
 var lodash = require('lodash');
-var helpers = require('./helpers');
 var database = require('./database');
+var helpers = require('./helpers');
+var gmail = require('./gmail');
+var jira = require('./jira');
 
 //========================================================================================================
-// Configs
-var eventConfigs = require('./credentials/events-conf.json');
+var AppError = require('./errors/AppError');
+var errorTemplates = require('./errors/errorTemplates');
 
 //========================================================================================================
-// Extract Event Data: params: { event: { data: { data }}}
-exports.extractEventData = function (params, callback) {
+exports.getDetailedMessage = function (message, callback) {
 
-    //-------------------------    
     var promise = new Promise((fulfill, reject) => {
+        gmail.getMessage(message.id, (err, detailedMessage) => {
 
-        //-------------------------
-        if (!params || !params.event || !params.event.data || !params.event.data.data)
-            return reject(new Error(`ExtractEventData: Missing parameters, got: ${params}`));
-
-        //-------------------------
-        var eventMessage = params.event.data.data;
-        eventMessage = JSON.parse(Buffer.from(eventMessage, 'base64').toString());
-        fulfill({
-            historyId: eventMessage.historyId
+            if (err) return reject(err);
+            fulfill(detailedMessage);
         });
     });
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
-}
-
-//========================================================================================================
-// Update Event Records: params: { historyId }
-exports.updateEventRecords = function (params, callback) {
-
-    //-------------------------        
-    var promise = new Promise((fulfill, reject) => {
-
-        //-------------------------        
-        if (!params || !params.historyId)
-            return reject(new Error(`UpdateEventRecords: Missing Parameters, got: ${params}`));
-
-        //-------------------------        
-        // Execute in series
-        async.series({
-
-            // Get last event historyId
-            lastHistoryId: function (done) {
-                database.getLatestEvent((err, event) => {
-                    if (err) return next(err);
-                    if (!event)
-                        return next(null, eventConfigs.seedHistoryId);
-
-                    next(null, event.historyId);
-                });
-            },
-
-            // Create new event record
-            newHistoryId: function (done) {
-                database.addNewEvent({ historyId: params.historyId }, (err, event) => {
-                    if (err) return next(err);
-                    next(null, event.historyId);
-                });
-            }
-
-        }, function (err, result) {
-            if (err) return reject(err);
-            if (result.lastHistoryId > result.newHistoryId)
-                return reject(
-                    new Error(`UpdateEventRecords: Invalid Parameters, lastHistoryId > newHistoryId (${result.lastHistoryId} > ${result.newHistoryId})`)
-                );
-
-            fulfill({
-                lastHistoryId: result.lastHistoryId,
-                newHistoryId: result.newHistoryId
-            });
-        });
-    });
-
-    //-------------------------        
-    return helpers.wrapAPI(promise, callback);
-}
+};
 
 //========================================================================================================
 // Format Gmail Messages to easy to work with structure
-exports.formatMessages = function (params, callback) {
+exports.formatMessage = function (message, callback) {
 
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
-        if (!params || !params.messages)
-            return reject(new Error(`FormatMessages: Missing Parameters, got: ${params}`));
-        if (params.messages.length === 0)
-            return reject(new Error(`FormatMessages: No messages to format`));
 
-        //-------------------------    
-        var transformedMessages = messages.map((message) => {
-            var transformedMessage = {
-                id: message.id,
-                threadId: message.threadId,
-                labelIds: message.labelIds,
-                historyId: message.historyId,
-                type: 'standard',
-                subject: '',
-                content: '',
-                attachments: []
-            };
+        if (!message)
+            return reject(new Error(`FormatMessages: Missing Parameters, message was ${message}`));
 
-            var headers = lodash.chain(message.payload.headers)
-                .keyBy('name')
-                .mapValues('value')
-                .value();
+        //-------------------------
+        // Transformed Message Structure
+        var transformedMessage = {
+            id: message.id,
+            threadId: message.threadId,
+            labelIds: message.labelIds,
+            historyId: message.historyId,
+            headers: {},
+            type: 'standard', // standard || reply
+            subject: null, // empty if is a reply-type message 
+            content: '',
+            attachments: []
+        };
 
-            transformedMessage.emailId = headers['Message-ID'];
-            if (headers['In-Reply-To'] || headers['References']) {
-                transformedMessage.type = 'reply';
-                transformedMessage.directReply = headers['In-Reply-To'];
-                transformedMessage.rootReply = headers['References'].split(' ')[0];
+        //-------------------------
+        // Parse headers      
+        transformedMessage.headers = lodash.chain(message.payload.headers)
+            .keyBy('name')
+            .mapValues('value')
+            .value();
+
+        //-------------------------
+        // Categorize message     
+        if (transformedMessage.headers['In-Reply-To'] || transformedMessage.headers['References'])
+            transformedMessage.type = 'reply';
+        else {
+            transformedMessage.type = 'standard';
+            transformedMessage.subject = transformedMessage.headers['Subject'];
+        }
+
+        //-------------------------
+        // Not a multipart-message        
+        if (!message.payload.mimeType.includes('multipart')) {
+            transformedMessage.content = message.payload.body;
+            return fulfill(transformedMessage);
+        }
+
+        //-------------------------
+        // Is a multipart-message        
+        // Get parts and flatten 2 level deep
+        var parts = message.payload.parts;
+        parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
+        parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
+
+        //-------------------------        
+        // Get Message content and attachments
+        transformedMessage.content = "";
+        transformedMessage.attachments = [];
+        parts.forEach((p) => {
+            if (!p.body.attachmentId && p.body.data && p.mimeType === 'text/plain')
+                transformedMessage.content += Buffer.from(p.body.data, 'base64').toString();
+            else if (p.filename && p.body.attachmentId) {
+                transformedMessage.attachments.push({
+                    mimeType: p.mimeType,
+                    filename: p.filename,
+                    id: p.body.attachmentId
+                });
             }
-            else
-                transformedMessage.subject = headers['Subject'];
-
-            if (!message.payload.mimeType.includes('multipart')) {
-                transformedMessage.content = message.payload.body;
-                return transformedMessage;
-            }
-
-            // Get parts and flatten 2 level deep
-            var parts = message.payload.parts;
-            parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
-            parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
-
-            // Get Message content and attachments
-            transformedMessage.content = "";
-            transformedMessage.attachments = [];
-            parts.forEach((p) => {
-                if (!p.body.attachmentId && p.body.data && p.mimeType === 'text/plain')
-                    transformedMessage.content += Buffer.from(p.body.data, 'base64').toString();
-                else if (p.filename && p.body.attachmentId) {
-                    transformedMessage.attachments.push({
-                        mimeType: p.mimeType,
-                        filename: p.filename,
-                        id: p.body.attachmentId
-                    });
-                }
-            });
-
-            return transformedMessage;
         });
 
-        fulfill({
-            messages: transformedMessages
-        });
+        fulfill(transformedMessage);
     });
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
-}
+};
 
 //========================================================================================================
-// Filter Messages based on company policies
-exports.filterMessages = function (params, callback) {
+// Check message based on company policies
+exports.checkMessage = function (message, callback) {
+
+    var promise = Promise.resolve(message);
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Assign message project based on CC, BCC
+exports.assignMessageProject = function (message, callback) {
 
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
         //-------------------------
-        if (!params || !params.messages)
-            return reject(new Error(`FilterMessages: Missing Parameters, got: ${params}`));
-
-        if (params.messages.length <= 0)
-            return reject(new Error(`FilterMessages: No messages to filter`));
+        message.project = { key: 'SAM' };
 
         //-------------------------
         // Current passing all messages unfiltered
-        fulfill({
-            messages: params.messages
+        fulfill(message);
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Register mapping, make sure no dup passed
+exports.registerMapping = function (message, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+        //-------------------------
+        database.createMapping(message, (err, mapping) => {
+            if (err && err.code !== 11000)
+                reject(err); // Natural disaster
+            //-----------
+            else if (err && err.code === 11000) {
+                reject(err); // Dup message
+            }
+            //-----------
+            else {
+                fulfill(message);
+            }
         });
     });
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
-}
+};
 
 //========================================================================================================
-// Deduplicate Messages across handlers
-exports.deduplicateMessages = function (params, callback) {
+// Create Jira Entity based on message type
+exports.createJiraEntity = function (message, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+        if (message.type === 'standard') {
+            jira.createIssue(message, (err, issue) => {
+                if (err) return reject(err);
+
+                // Assign Issue                
+                message.issueId = issue.id;
+                message.issueKey = issue.key;
+
+                fulfill(message);
+            });
+        }
+        else if (message.type === 'reply') {
+
+            // Find Reply Source
+            database.findReplySourceMapping(message, (err, mapping) => {
+                if (err) return reject(err);
+
+                // Assign Reply Source Issue
+                message.issueId = mapping.issueId;
+                message.issueKey = mapping.issueKey;
+
+                // Create comment
+                jira.createComment(message, (err, comment) => {
+                    if (err) return reject(err);
+                    message.commentId = comment.id;
+                    fulfill(message);
+                });
+            });
+        }
+        else
+            reject(new Error(`Unrecognized message type: ${message.type}`));
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Update mapping
+exports.updateMapping = function (message, callback) {
 
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
         //-------------------------
-        if (!params || !params.messages)
-            return reject(new Error(`DeduplicateMessages: Missing Parameters, got: ${params}`));
-
-        if (params.messages.length <= 0)
-            return reject(new Error(`DeduplicateMessages: No messages to deduplicate`));
-
-        //-------------------------
-        async.reduce(params.messages, [], (memo, message, done) => {
-
-            database.markMessageProcessing(message, (err) => {
-                if (err && err.code !== 11000) return done(err); // System Error
-
-                if (!err)
-                    memo.push(message);
-                else
-                    console.log(`DeduplicateMessages: Can't mark message processing, of message: ${message.id}, err: ${err.message}`);
-
-                done(null, memo);
-            });
-        }, (err, deduplicatedMessages) => {
+        database.updateMapping(message, (err, mapping) => {
             if (err) return reject(err);
-
-            fulfill({
-                messages: deduplicatedMessages
-            });
+            fulfill(message);
         });
     });
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
-}
+};
 
 //========================================================================================================
-// 
-exports.categorizeMessages = function (params, callback) {
+// Upload attachments
+exports.uploadAttachments = function (message, callback) {
+
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
-        //-------------------------
-        if (!params || !params.messages)
-            return reject(new Error(`CategorizeMessages: Missing Parameters, got: ${params}`));
 
-        if (params.messages.length <= 0)
-            return reject(new Error(`CategorizeMessages: No messages to categorize`));
+        if (!message.attachments || message.attachments.length === 0)
+            return fulfill(message);            
 
         //-------------------------
-        var categorizedMessages = params.messages.map((message) => {
+        async.eachSeries(message.attachments, (attachment, cb) => {
+            gmail.getAttachment({
+                messageId: message.id,
+                attachmentId: attachment.id
+            }, (err, data) => {
 
-        });
-
-        fulfill({
-            messages: categorizedMessages
+                console.log(`Attachment Buffered ${attachment.filename}`);
+                jira.uploadAttachment({
+                    issueId: message.issueId,
+                    filename: attachment.filename,
+                    mimeType: attachment.mimeType,
+                    data: data
+                }, (err) => {
+                    if (err) return cb(err);
+                    console.log(`Attachment Uploaded ${attachment.filename}`);
+                    cb(null);
+                });
+            });
+        }, (err) => {
+            if (err) return reject(err);
+            fulfill(message);
         });
     });
-}
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Mark message processed
+exports.markMessageProcessed = function (message, callback) {
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        //-------------------------
+        gmail.markMessageProcessed(message, (err) => {
+            if (err) return reject(err);
+            fulfill(message);
+        });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};

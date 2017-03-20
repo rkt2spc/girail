@@ -2,8 +2,16 @@
 // Dependencies
 var async = require('async');
 var google = require('googleapis');
-var database = require('./database');
-var AppError = require('./errors').AppError;
+var helpers = require('./helpers');
+
+//========================================================================================================
+const METADATA_HEADERS = ['In-Reply-To', 'References', 'From', 'Date', 'Message-ID', 'Subject', 'To'];
+const LABELS = {
+    'Unprocessed': 'Label_4',
+    'Enqueued': 'Label_5',
+    'Unprocessible': 'Label_6',
+    'Processed': 'Label_7'
+};
 
 //========================================================================================================
 // Credentials
@@ -23,81 +31,183 @@ oauth2Client.setCredentials(oauth2Tokens);
 // Gmail Service
 var gmailService = google.gmail({
     version: 'v1',
-    auth: authClient
+    auth: oauth2Client
 });
 
 //========================================================================================================
-// Retrieve Added Messages: params: { lastHistoryId, newHistoryId }
-exports.retrieveAddedMessages = function (params, callback) {
+// Retrieve all unprocessed messages
+exports.retrieveUnprocessedMessages = function (callback) {
 
-    //-------------------------        
+    //-------------------------
     var promise = new Promise((fulfill, reject) => {
 
-        //-------------------------        
-        if (!params || !params.historyId)
-            return reject(new Error(`RetrieveAddedMessages: Missing parameters, got ${params}`));
-        
-        if (params.historyId <= 0)
-            return reject(new Error(`RetrieveAddedMessages: Invalid historyId, expected > 0, got ${params.historyId}`));
-
         //-------------------------
-        async.waterfall([
-            function (next) {
-                gmailService.users.history.list({
-                    userId: 'me',
-                    historyTypes: 'messageAdded',
-                    startHistoryId: params.historyId
-                },
-                    function (err, response) {
-                        if (err) return next(err);
-                        if (!response.history || response.history.length === 0)
-                            return next(new Error(`RetrieveAddedMessages: No events happen since provided historyId ${params.historyId}`));
-
-                        var histories = lodash.chain(response.histories)
-                            .filter((h) => h.id < params.newHistoryId && h.messagesAdded && h.messagesAdded.length > 0)
-                            .map((h) => h.messagesAdded)
-                            .flattenDeep()
-                            .uniqBy('message.id')
-                            .map((h) => h.message);
-
-                        next(null, messages);
-                    });
-            },
-            function (addedMessages, next) {
-                async.reduce(addedMessages, [], (memo, message, done) => {
-                    gmailService.users.messages.get({
-                        userId: 'me',
-                        id: message.id,
-                        format: 'full',
-                        metadataHeaders: METADATA_HEADERS
-                    }, (err, detailedMessage) => {
-                        if (err && err.code !== 404) return done(err);
-                        
-                        if (!err)
-                            memo.push(detailedMessage);
-                        else
-                            console.log(`RetrieveAddedMessages: Can't get message detail, of message ${message.id}`);
-
-                        done(null, memo);
-                    });
-
-                }, (err, detailedMessages) => {
-                    if (err) return next(err);
-                    next(null, detailedMessages);
-                });
-            }
-        ], (err, addedDetailedMessages) => {
+        gmailService.users.messages.list({
+            userId: 'me',
+            labelIds: [LABELS['Unprocessed']]
+        }, (err, response) => {
             if (err) return reject(err);
-            fulfill({
-                messages: addedDetailedMessages
-            });
-        });
 
+            // No new messages
+            if (!response.messages || response.messages.length <= 0)
+                return fulfill([]);
+
+            // Have new messages
+            fulfill(response.messages);
+        });
     });
 
-    //-------------------------        
+    //-------------------------
     return helpers.wrapAPI(promise, callback);
-}
+};
 
 //========================================================================================================
+// Mark messages enqueued
+exports.markMessageEnqueued = function (message, callback) {
 
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        // if (!message || !message.id)
+
+
+        //-------------------------
+        gmailService.users.messages.modify(
+            // Modify params
+            {
+                userId: 'me',
+                id: message.id,
+                resource: {
+                    addLabelIds: [LABELS['Enqueued']],
+                    removeLabelIds: [LABELS['Unprocessed']]
+                }
+            },
+            // Callback
+            (err) => {
+                if (err) return reject(err);
+                fulfill();
+            }
+        );
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Mark messages Unprocessible
+exports.markMessageUnprocessible = function (message, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        // if (!message || !message.id)
+
+        //-------------------------
+        gmailService.users.messages.modify(
+            // Modify params
+            {
+                userId: 'me',
+                id: message.id,
+                resource: {
+                    addLabelIds: [LABELS['Unprocessible']],
+                    removeLabelIds: [LABELS['Unprocessed']]
+                }
+            },
+            // Callback
+            (err) => {
+                if (err) return reject(err);
+                fulfill();
+            }
+        );
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Mark messages Unprocessible
+exports.markMessageProcessed = function (message, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        // if (!message || !message.id)
+
+        //-------------------------
+        gmailService.users.messages.modify(
+            // Modify params
+            {
+                userId: 'me',
+                id: message.id,
+                resource: {
+                    addLabelIds: [LABELS['Enqueued']],
+                    removeLabelIds: [LABELS['Processed']]
+                }
+            },
+            // Callback
+            (err) => {
+                if (err) return reject(err);
+                fulfill();
+            }
+        );
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+exports.getMessage = function (messageId, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        // if (!message || !message.id)
+
+        //-------------------------
+        gmailService.users.messages.get(
+            // get params
+            {
+                userId: 'me',
+                id: messageId,
+                format: 'full',
+                metadataHeaders: METADATA_HEADERS
+            },
+            // Callback
+            (err, message) => {
+                if (err) return reject(err);
+                fulfill(message);
+            }
+        );
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+exports.getAttachment = function (params, callback) {
+    var messageId = params.messageId;
+    var attachmentId = params.attachmentId;
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+
+        gmailService.users.messages.attachments.get({
+            userId: 'me',
+            messageId: messageId,
+            id: attachmentId
+        }, (err, response) => {
+
+            if (err) return reject(err);
+
+            var data = Buffer.from(response.data, 'base64');
+            fulfill(data);
+        });
+    });
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
