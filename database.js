@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------
 // Dependencies
 var helpers = require('./helpers');
-var AppError = requrire('./errors/AppError.js');
+var AppError = require('./errors/AppError.js');
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise; //Use native ES6 Promise instead of Mongoose's default
 

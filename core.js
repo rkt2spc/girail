@@ -9,7 +9,7 @@ var jira = require('./jira');
 
 //========================================================================================================
 var AppError = require('./errors/AppError');
-var errorTemplates = require('./errors/templates');
+var errorTemplates = require('./errors/errorTemplates');
 
 //========================================================================================================
 exports.getDetailedMessage = function (message, callback) {
