@@ -1,4 +1,3 @@
-//========================================================================================================
 function AppError(params) {
 
     this.code = params.code || '0';
@@ -11,7 +10,6 @@ function AppError(params) {
 }
 
 AppError.prototype = Object.create(Error.prototype);
-AppError.prototype.constructor = Application;
+AppError.prototype.constructor = AppError;
 
-exports.AppError = AppError;
-//========================================================================================================
+module.exports = AppError;

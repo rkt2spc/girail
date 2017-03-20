@@ -1,3 +1,7 @@
+function pad(value, length) {
+    return (value.toString().length < length) ? pad(value + ' ', length) : value;
+}
+
 module.exports = {
     
     log: function (logTitle) {
@@ -5,6 +9,11 @@ module.exports = {
             console.log(logTitle + ':', logData);
             return logData;
         };
+    },
+
+    logStatus: function (job, status) {
+        console.log(pad(job, 30), status);
+        return (logData) => logData;
     },
 
     wrapAPI: function (promise, callback) {
