@@ -1,5 +1,6 @@
 var path = require('path');
 var fs = require('fs');
+var lodash = require('lodash');
 var readline = require('readline');
 var google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
@@ -8,7 +9,11 @@ var OAuth2 = google.auth.OAuth2;
 var Configs = {
     CREDENTIALS_PATH: process.env.CREDENTIALS_PATH || path.join(__dirname, 'credentials', 'oauth-secret.json'),
     TOKEN_PATH: process.env.TOKEN_PATH || path.join(__dirname, 'credentials', 'access-token.json'),
-    SCOPES: ['https://mail.google.com/']
+    SCOPES: ['https://mail.google.com/'],
+
+    AWS_CONFIG_PATH: process.env.AWS_CONFIG_PATH || path.join(__dirname, 'credentials', 'aws-conf.json'),
+    GMAIL_CONFIG_PATH: process.env.GMAIL_CONFIG_PATH || path.join(__dirname, 'credentials', 'gmail-conf.json'),
+    DATABASE_CONFIG_PATH: process.env.DATABASE_CONFIG_PATH || path.join(__dirname, 'credentials', 'database-conf.json')
 };
 
 //========================================================================================================
@@ -114,11 +119,46 @@ Promise.resolve(true)
     .then(loadCredentials)
     .then(createAuthClient)
     .then(acquireAuthToken)
+    // Oauth2 Credentials
     .then((authClient) => {
         console.log('OK! OAuth2 credentials updated!');
+        return authClient;
     })
     .catch((err) => {
         console.log('Failed to retrieve OAuth2 credentials');
+        console.log(err);
+    })
+    // Configure Gmail (default labels)
+    .then((authClient) => {
+
+        var gmail = google.gmail({
+            version: 'v1',
+            auth: authClient
+        });
+
+        var promise = new Promise((fulfill, reject) => {
+            gmail.users.labels.list({
+                userId: 'me',
+            }, (err, response) => {
+
+                if (err) return reject(err);
+
+                var labels = response.labels || [];
+                labels = lodash.chain(labels)
+                    .keyBy('name')
+                    .mapValues('id')
+                    .value();
+
+                fs.writeFileSync(Configs.GMAIL_CONFIG_PATH, JSON.stringify(labels));
+                return fulfill(labels);
+            });
+        });
+
+        return promise;
+    })
+    .then((labels) => console.log('OK! Gmail labels updated!'))
+    .catch((err) => {
+        console.log('Failed to retrieve gmail default labels');
         console.log(err);
     })
     .then(() => process.exit(0));

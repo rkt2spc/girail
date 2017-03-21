@@ -6,12 +6,7 @@ var helpers = require('./helpers');
 
 //========================================================================================================
 const METADATA_HEADERS = ['In-Reply-To', 'References', 'From', 'Date', 'Message-ID', 'Subject', 'To'];
-const LABELS = {
-    'Unprocessed': 'Label_4',
-    'Enqueued': 'Label_5',
-    'Unprocessible': 'Label_6',
-    'Processed': 'Label_7'
-};
+const LABELS = require('./credentials/gmail-conf.json');
 
 //========================================================================================================
 // Credentials
@@ -70,7 +65,6 @@ exports.markMessageEnqueued = function (message, callback) {
 
         // if (!message || !message.id)
 
-
         //-------------------------
         gmailService.users.messages.modify(
             // Modify params
@@ -111,7 +105,7 @@ exports.markMessageUnprocessible = function (message, callback) {
                 id: message.id,
                 resource: {
                     addLabelIds: [LABELS['Unprocessible']],
-                    removeLabelIds: [LABELS['Unprocessed']]
+                    removeLabelIds: [LABELS['Enqueued'], LABELS['Unprocessed']]
                 }
             },
             // Callback
@@ -142,8 +136,8 @@ exports.markMessageProcessed = function (message, callback) {
                 userId: 'me',
                 id: message.id,
                 resource: {
-                    addLabelIds: [LABELS['Enqueued']],
-                    removeLabelIds: [LABELS['Processed']]
+                    addLabelIds: [LABELS['Processed']],
+                    removeLabelIds: [LABELS['Unprocessed'], LABELS['Enqueued']]
                 }
             },
             // Callback

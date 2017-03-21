@@ -73,7 +73,7 @@ const app = Consumer.create({
                         // Can't re-enqueue
                         if (err) {
                             console.log(err);
-                            return done(err);
+                            return done(err); // Should push logs to database or config dead-letter queue for manual recovery
                         }
 
                         done();
@@ -82,7 +82,7 @@ const app = Consumer.create({
                 }
                 else {
                     console.log(err.message);
-                    done(err);
+                    done(err); // Should push logs to database or config dead-letter queue for manual recovery
                 }
 
             });

@@ -1,13 +1,19 @@
 #!/bin/bash
 
 CONTENTS=( 
-    "index.js"
+    "consumer.js"
+    "core.js"
+    "cron.js"
     "database.js"
+    "gmail.js"
     "helpers.js"
+    "jira.js"
+    "run-once.js"
+    "errors"
     "models"
-    "processors"    
     "credentials"
-    "package.json" )
+    "package.json"
+    "README.md" )
 
 rm -R "bin" 2> /dev/null
 mkdir -p "bin"
