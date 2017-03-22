@@ -33,6 +33,7 @@ exports.formatMessage = function (message, callback) {
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
 
+        //-------------------------        
         if (!message)
             return reject(new Error(`FormatMessages: Missing Parameters, message was ${message}`));
 
@@ -43,7 +44,6 @@ exports.formatMessage = function (message, callback) {
             threadId: message.threadId,
             labelIds: message.labelIds,
             historyId: message.historyId,
-            headers: {},
             type: 'standard', // standard || reply
             subject: null, // empty if is a reply-type message 
             content: '',
@@ -52,50 +52,60 @@ exports.formatMessage = function (message, callback) {
 
         //-------------------------
         // Parse headers      
-        transformedMessage.headers = lodash.chain(message.payload.headers)
+        var headers = lodash.chain(message.payload.headers)
             .keyBy('name')
             .mapValues('value')
             .value();
 
         //-------------------------
         // Categorize message     
-        if (transformedMessage.headers['In-Reply-To'] || transformedMessage.headers['References'])
+        if (headers['In-Reply-To'] || headers['References'])
             transformedMessage.type = 'reply';
         else {
             transformedMessage.type = 'standard';
-            transformedMessage.subject = transformedMessage.headers['Subject'];
+            transformedMessage.subject = headers['Subject'];
         }
 
         //-------------------------
         // Not a multipart-message        
         if (!message.payload.mimeType.includes('multipart')) {
-            transformedMessage.content = message.payload.body;
-            return fulfill(transformedMessage);
+            transformedMessage.content = Buffer.from(message.payload.body.data, 'base64').toString();
+        }
+        else {
+            //-------------------------
+            // Is a multipart-message        
+            // Get parts and flatten 2 level deep
+            var parts = message.payload.parts;
+            parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
+            parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
+
+            //-------------------------        
+            // Get Message content and attachments
+            transformedMessage.content = "";
+            transformedMessage.attachments = [];
+            parts.forEach((p) => {
+                if (!p.body.attachmentId && p.body.data && p.mimeType === 'text/plain')
+                    transformedMessage.content += Buffer.from(p.body.data, 'base64').toString();
+                else if (p.filename && p.body.attachmentId) {
+                    transformedMessage.attachments.push({
+                        mimeType: p.mimeType,
+                        filename: p.filename,
+                        id: p.body.attachmentId
+                    });
+                }
+            });
         }
 
         //-------------------------
-        // Is a multipart-message        
-        // Get parts and flatten 2 level deep
-        var parts = message.payload.parts;
-        parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
-        parts = lodash.flatMapDeep(parts, p => p.mimeType.includes('multipart') ? p.parts : p);
+        // Normalizing message
+        if (transformedMessage.type === 'standard') {
+            if (!transformedMessage.subject || transformedMessage.subject.length === 0)
+                transformedMessage.subject = '(Untitled)';
+        }
+        if (transformedMessage.content.length === 0)
+            transformedMessage.content = '(no content)';
 
-        //-------------------------        
-        // Get Message content and attachments
-        transformedMessage.content = "";
-        transformedMessage.attachments = [];
-        parts.forEach((p) => {
-            if (!p.body.attachmentId && p.body.data && p.mimeType === 'text/plain')
-                transformedMessage.content += Buffer.from(p.body.data, 'base64').toString();
-            else if (p.filename && p.body.attachmentId) {
-                transformedMessage.attachments.push({
-                    mimeType: p.mimeType,
-                    filename: p.filename,
-                    id: p.body.attachmentId
-                });
-            }
-        });
-
+        //-------------------------
         fulfill(transformedMessage);
     });
 
@@ -108,6 +118,33 @@ exports.formatMessage = function (message, callback) {
 exports.checkMessage = function (message, callback) {
 
     var promise = Promise.resolve(message);
+
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Check message extra contents like quotes, signature
+exports.removeMessageExtras = function (message, callback) {
+
+    var promise = new Promise((fulfill, reject) => {
+
+        //-------------------------        
+        if (message.type !== 'reply')
+            return fulfill(message);
+
+        //-------------------------
+        // Remove Gmail Extra
+        message.content = message.content.replace(/(^\w.+:\r?\n)?(^>.*(\r?\n|$))+/gm, ''); // Reply Quotes
+        message.content = message.content.replace(/(\r?\n){2,}-- *\r?\n[^]+$/g, ''); // Signature
+        message.content = message.content.replace(/(\r?\n){2,}(-+ *Forwarded message *-+)\r?\n(.+\n)+/gm, ''); // Forward notice
+        
+        //-------------------------
+        // Remove Outlook Reply Quotes
+
+        //-------------------------
+        fulfill(message);
+    });
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
@@ -141,9 +178,10 @@ exports.registerMapping = function (message, callback) {
         database.createMapping(message, (err, mapping) => {
             if (err && err.code !== 11000)
                 reject(err); // Natural disaster
+
             //-----------
             else if (err && err.code === 11000) {
-                reject(err); // Dup message
+                reject(err); // Dup message, TO_DO
             }
             //-----------
             else {
@@ -224,7 +262,7 @@ exports.uploadAttachments = function (message, callback) {
     var promise = new Promise((fulfill, reject) => {
 
         if (!message.attachments || message.attachments.length === 0)
-            return fulfill(message);            
+            return fulfill(message);
 
         //-------------------------
         async.eachSeries(message.attachments, (attachment, cb) => {
@@ -258,6 +296,7 @@ exports.uploadAttachments = function (message, callback) {
 //========================================================================================================
 // Mark message processed
 exports.markMessageProcessed = function (message, callback) {
+    
     //-------------------------
     var promise = new Promise((fulfill, reject) => {
 
@@ -270,4 +309,17 @@ exports.markMessageProcessed = function (message, callback) {
 
     //-------------------------
     return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Handle Error
+exports.handleError = function (error, callback) {
+
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
+        
+    });
+    
+    //-------------------------
+    return helpers.wrapAPI(promise, callback);    
 };
