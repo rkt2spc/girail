@@ -67,14 +67,41 @@ const app = Consumer.create({
             .then(helpers.logStatus('Mark message processed', 'Done'))
             //-----------------------------------------------------------------                   
             .then(() => {
+                // No error happened
                 console.log(`Finished processing message ${gmailMessage.id}`);
                 done();
             })
             //-----------------------------------------------------------------            
             .catch((err) => {
-                console.log(err.message);
-                require('fs').writeFileSync('error', err.toString());
-                done(err); // Should push logs to database or config dead-letter queue for manual recovery
+                
+                if (err instanceof RecoverableError)
+                    return done(err); // Leave message at queue-front, retry a few times before pushed to dead-letter-queue
+                
+                if (err instanceof UnrecoverableError) {
+                    // Do some sophisticated logging
+                    require('fs').writeFileSync('error', err.toString()); // Not so sophisticated
+                    return done(); // Remove the message and do manual recovery based on logs
+                }
+
+                if (err instanceof InterceptSignal) { // Look at errors/error-references.js for more details
+
+                    if (err.code === 'IS003')
+                        return done(); // Already processed, drop message
+                    
+                    if (err.code === 'IS004') {
+                        // Re-enqueue
+                        queue.sendMessage(JSON.stringify(gmailMessage), (err, data) => {
+                            
+                            if (err) {
+                                console.log('Re-enqueue error:');
+                                console.log(err);
+                                return done(err);
+                            }
+
+                            return done();
+                        });
+                    }
+                }
             });
     }
 });

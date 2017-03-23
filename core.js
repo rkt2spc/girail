@@ -397,9 +397,3 @@ exports.markMessageProcessed = function (message, callback) {
     //-------------------------
     return helpers.wrapAPI(promise, callback);
 };
-
-//========================================================================================================
-// Handle Error
-exports.handleError = function(error, callback) {
-
-};
