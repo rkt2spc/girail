@@ -6,20 +6,20 @@ var helpers = require('./helpers');
 var database = require('./database');
 
 //========================================================================================================
-// Credentials
-const DEFAULT_PROJECT = 'SAM';
-const DEFAULT_ISSUE_TYPE = "Task";
-const DEFAULT_REPORTER = "admin";
+// Configurations
+var jiraCredentials = require('./credentials/jira-secret.json');
+var jiraConfigs = require('./configs/jira-conf.json');
+var metadataMapping = require('./configs/metadata-mapping.json');
 
 //========================================================================================================
 // Jira Service
 var jiraService = new JiraApi({
+    strictSSL: true,
     protocol: 'https',
-    host: 'nmtuan.atlassian.net',
-    username: 'admin',
-    password: '123456',
-    apiVersion: '2',
-    strictSSL: true
+    host: jiraConfigs.host,
+    apiVersion: jiraConfigs.api_version,
+    username: jiraCredentials.username,
+    password: jiraCredentials.password
 });
 
 //========================================================================================================
@@ -28,19 +28,37 @@ exports.createIssue = function (message, callback) {
     //-------------------------        
     var promise = new Promise((fulfill, reject) => {
 
+        // New Issue contents
+        var jiraFields = {
+            project: { key: message.project.key },
+            summary: message.subject,
+            description: message.content,
+
+            // Default
+            issuetype: jiraConfigs.default_issue_type,
+            reporter: jiraConfigs.default_reporter
+        };
+
+        //-------------------------                
+        // Loop mapping
+        metadataMapping.forEach((mapping) => {
+            // If message doesn't have required metadata or jira doesn't have required field. do nothing
+            if (!message.metadata[mapping.metaName] || !jiraConfigs.fields[mapping.fieldName]) return;
+
+            var sourceMeta = message.metadata[mapping.metaName];
+            var targetField = jiraConfigs.fields[mapping.fieldName];
+
+            if (targetField.schema.type === 'array')
+                jiraFields[targetField.id] = sourceMeta.split(/ *, */g);
+            else
+                jiraFields[targetField.id] = { value: sourceMeta };
+        });
+
+
+        console.log(jiraFields);    
         //-------------------------
         jiraService.addNewIssue({
-            fields: {
-                project: { key: message.project.key },
-                summary: message.subject,
-                description: message.content,
-                issuetype: {
-                    name: DEFAULT_ISSUE_TYPE
-                },
-                reporter: {
-                    name: DEFAULT_REPORTER
-                }
-            }
+            fields: jiraFields
         })
             .then((issue) => fulfill(issue))
             .catch((err) => reject(err));
@@ -90,5 +108,5 @@ exports.uploadAttachment = function (params, callback) {
     });
 
     //-------------------------
-    return helpers.wrapAPI(promise, callback);    
+    return helpers.wrapAPI(promise, callback);
 };

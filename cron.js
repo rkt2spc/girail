@@ -1,16 +1,7 @@
 //========================================================================================================
 var async = require('async');
 var gmail = require('./gmail');
-
-//========================================================================================================
-var AWS = require('aws-sdk');
-var sqs = new AWS.SQS({
-    region: 'eu-west-2',
-    apiVersion: '2012-11-05'
-});
-
-//========================================================================================================
-var Configs = require('./credentials/aws-conf.json');
+var queue = require('./queue');
 
 //========================================================================================================
 gmail.retrieveUnprocessedMessages((err, messages) => {
@@ -29,10 +20,7 @@ gmail.retrieveUnprocessedMessages((err, messages) => {
         (message, next) => {
 
             console.log(`Processing message ${message.id}`);
-            sqs.sendMessage({
-                MessageBody: JSON.stringify(message),
-                QueueUrl: Configs.queue_url
-            }, (err, data) => {
+            queue.sendMessage(JSON.stringify(message), (err, data) => {
 
                 // Can't enqueue
                 if (err) {

@@ -39,6 +39,9 @@ jspm_packages
 # Credentials
 Credentials
 
-# build
+# Build
 bin
 deploy-bundle.zip
+
+# Configurations
+configs

@@ -6,8 +6,8 @@ var mongoose = require('mongoose');
 mongoose.Promise = global.Promise; //Use native ES6 Promise instead of Mongoose's default
 
 //------------------------------------------------------------------------
-// Mongo Configurations
-var configs = require('./credentials/database-conf.json');
+// Configurations
+var dbConfigs = require('./configs/database-conf.json');
 
 //------------------------------------------------------------------------
 // Models
@@ -15,7 +15,7 @@ var Mapping = require('./models/Mapping');
 
 //------------------------------------------------------------------------
 var connectPromise = new Promise((fulfill, reject) => {
-    mongoose.connect('mongodb://localhost/test-db', (err) => {
+    mongoose.connect(dbConfigs.database_url, (err) => {
         if (err) reject(err);
         else fulfill();
     });

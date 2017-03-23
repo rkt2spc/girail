@@ -4,16 +4,18 @@ function pad(value, length) {
 
 module.exports = {
     
-    log: function (logTitle) {
+    log: function (logMessage) {
         return function (logData) {
-            console.log(logTitle + ':', logData);
+            console.log(logMessage);
             return logData;
         };
     },
 
     logStatus: function (job, status) {
-        console.log(pad(job, 30), status);
-        return (logData) => logData;
+        return function(logData) {
+            console.log(pad(job, 30), status);        
+            return logData;
+        };
     },
 
     wrapAPI: function (promise, callback) {

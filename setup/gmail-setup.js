@@ -1,31 +1,28 @@
+//========================================================================================================
+// Dependencies
 var path = require('path');
 var fs = require('fs');
 var lodash = require('lodash');
 var readline = require('readline');
 var google = require('googleapis');
 var OAuth2 = google.auth.OAuth2;
+var helpers = require('../helpers');
 
 //========================================================================================================
+// Configurations
 var Configs = {
-    CREDENTIALS_PATH: process.env.CREDENTIALS_PATH || path.join(__dirname, 'credentials', 'oauth-secret.json'),
-    TOKEN_PATH: process.env.TOKEN_PATH || path.join(__dirname, 'credentials', 'access-token.json'),
     SCOPES: ['https://mail.google.com/'],
-
-    AWS_CONFIG_PATH: process.env.AWS_CONFIG_PATH || path.join(__dirname, 'credentials', 'aws-conf.json'),
-    GMAIL_CONFIG_PATH: process.env.GMAIL_CONFIG_PATH || path.join(__dirname, 'credentials', 'gmail-conf.json'),
-    DATABASE_CONFIG_PATH: process.env.DATABASE_CONFIG_PATH || path.join(__dirname, 'credentials', 'database-conf.json')
+    GOOGLE_CREDENTIALS_PATH: process.env.GOOGLE_CREDENTIALS_PATH || path.resolve(__dirname, '..', 'credentials', 'google-secret.json'),
+    GOOGLE_TOKEN_PATH: process.env.GOOGLE_TOKEN_PATH || path.resolve(__dirname, '..', 'credentials', 'google-token.json'),
+    GMAIL_CONFIG_PATH: process.env.GMAIL_CONFIG_PATH || path.resolve(__dirname, '..', 'configs', 'gmail-conf.json')
 };
-
-//========================================================================================================
-var database = require('./database');
-
-//========================================================================================================
+var gmailConfigs = require('../configs/gmail-conf.json');
 
 //========================================================================================================
 // Load setCredentials
 var loadCredentials = function () {
     return new Promise((fulfill, reject) => {
-        fs.readFile(Configs.CREDENTIALS_PATH, (err, content) => {
+        fs.readFile(Configs.GOOGLE_CREDENTIALS_PATH, (err, content) => {
             if (err) reject(err);
             else {
                 try {
@@ -43,7 +40,7 @@ var loadCredentials = function () {
 //========================================================================================================
 // Create Auth Client
 var createAuthClient = function () {
-    var credentials = require(Configs.CREDENTIALS_PATH).installed;
+    var credentials = require(Configs.GOOGLE_CREDENTIALS_PATH).installed;
     return new OAuth2(
         credentials.client_id,
         credentials.client_secret,
@@ -80,12 +77,12 @@ var getNewToken = function (oauth2Client) {
 
 var storeToken = function (token) {
     return new Promise((fulfill, reject) => {
-        fs.mkdir(path.dirname(Configs.TOKEN_PATH), (err) => {
+        fs.mkdir(path.dirname(Configs.GOOGLE_TOKEN_PATH), (err) => {
             if (err && err.code !== 'EEXIST') return reject(err);
-            fs.writeFile(Configs.TOKEN_PATH, JSON.stringify(token), (e) => {
+            fs.writeFile(Configs.GOOGLE_TOKEN_PATH, JSON.stringify(token), (e) => {
                 if (e) reject(e);
                 else {
-                    console.log('Token stored to', Configs.TOKEN_PATH);
+                    console.log('Token stored to', Configs.GOOGLE_TOKEN_PATH);
                     fulfill(token);
                 }
             });
@@ -97,7 +94,7 @@ var storeToken = function (token) {
 // Acquire Auth Token
 var acquireAuthToken = function (oauth2Client) {
     return new Promise((fulfill, reject) => {
-        fs.readFile(Configs.TOKEN_PATH, (err, rawToken) => {
+        fs.readFile(Configs.GOOGLE_TOKEN_PATH, (err, rawToken) => {
             if (err) {
                 getNewToken(oauth2Client)
                     .then((newToken) => {
@@ -115,50 +112,55 @@ var acquireAuthToken = function (oauth2Client) {
 };
 
 //========================================================================================================
-Promise.resolve(true)
-    .then(loadCredentials)
-    .then(createAuthClient)
-    .then(acquireAuthToken)
-    // Oauth2 Credentials
-    .then((authClient) => {
-        console.log('OK! OAuth2 credentials updated!');
-        return authClient;
-    })
-    .catch((err) => {
-        console.log('Failed to retrieve OAuth2 credentials');
-        console.log(err);
-    })
-    // Configure Gmail (default labels)
-    .then((authClient) => {
+var listGmailLabels = function (authClient, callback) {
+    //-------------------------
+    var promise = new Promise((fulfill, reject) => {
 
         var gmail = google.gmail({
             version: 'v1',
             auth: authClient
         });
 
-        var promise = new Promise((fulfill, reject) => {
-            gmail.users.labels.list({
-                userId: 'me',
-            }, (err, response) => {
+        gmail.users.labels.list({
+            userId: 'me',
+        }, (err, response) => {
 
-                if (err) return reject(err);
+            if (err) return reject(err);
 
-                var labels = response.labels || [];
-                labels = lodash.chain(labels)
-                    .keyBy('name')
-                    .mapValues('id')
-                    .value();
+            var labels = response.labels || [];
+            labels = lodash.chain(labels)
+                .keyBy('name')
+                .mapValues('id')
+                .value();
 
-                fs.writeFileSync(Configs.GMAIL_CONFIG_PATH, JSON.stringify(labels));
-                return fulfill(labels);
-            });
+            gmailConfigs.labels = labels;
+            return fulfill(labels);
         });
+    });
 
-        return promise;
-    })
-    .then((labels) => console.log('OK! Gmail labels updated!'))
+    //-------------------------    
+    return helpers.wrapAPI(promise, callback);
+};
+
+//========================================================================================================
+// Setup Promise
+var setupPromise = Promise.resolve()
+    // Refresh Google Tokens
+    .then(loadCredentials)
+    .then(createAuthClient)
+    .then(acquireAuthToken)
+    .then(helpers.log('OK! Google credentials updated!'))
+    // Update Gmail Configs (default labels)
+    .then(listGmailLabels)
+    .then(() => fs.writeFileSync(Configs.GMAIL_CONFIG_PATH, JSON.stringify(gmailConfigs, null, 2)))
+    .then(helpers.log('OK! Gmail configs updated!'))
     .catch((err) => {
-        console.log('Failed to retrieve gmail default labels');
+        console.log('Failed to setup gmail');
         console.log(err);
-    })
-    .then(() => process.exit(0));
+    });
+
+//========================================================================================================
+// Exports
+module.exports = function (callback) {
+    return helpers.wrapAPI(setupPromise, callback);
+};

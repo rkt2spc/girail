@@ -5,22 +5,22 @@ var google = require('googleapis');
 var helpers = require('./helpers');
 
 //========================================================================================================
-const METADATA_HEADERS = ['In-Reply-To', 'References', 'From', 'Date', 'Message-ID', 'Subject', 'To'];
-const LABELS = require('./credentials/gmail-conf.json');
+// Configurations
+var gmailConfigs = require('./configs/gmail-conf.json');
 
 //========================================================================================================
 // Credentials
-var oauth2Credentials = require('./credentials/oauth-secret.json').installed;
-var oauth2Tokens = require('./credentials/access-token.json');
+var googleCredentials = require('./credentials/google-secret.json').installed;
+var googleTokens = require('./credentials/google-token.json');
 
 //========================================================================================================
 // OAuth2 Client
 var oauth2Client = new google.auth.OAuth2(
-    oauth2Credentials.client_id,
-    oauth2Credentials.client_secret,
-    oauth2Credentials.redirect_uris[0]
+    googleCredentials.client_id,
+    googleCredentials.client_secret,
+    googleCredentials.redirect_uris[0]
 );
-oauth2Client.setCredentials(oauth2Tokens);
+oauth2Client.setCredentials(googleTokens);
 
 //========================================================================================================
 // Gmail Service
@@ -39,7 +39,7 @@ exports.retrieveUnprocessedMessages = function (callback) {
         //-------------------------
         gmailService.users.messages.list({
             userId: 'me',
-            labelIds: [LABELS['Unprocessed']]
+            labelIds: [gmailConfigs.labels['Unprocessed']]
         }, (err, response) => {
             if (err) return reject(err);
 
@@ -72,8 +72,8 @@ exports.markMessageEnqueued = function (message, callback) {
                 userId: 'me',
                 id: message.id,
                 resource: {
-                    addLabelIds: [LABELS['Enqueued']],
-                    removeLabelIds: [LABELS['Unprocessed']]
+                    addLabelIds: [gmailConfigs.labels['Enqueued']],
+                    removeLabelIds: [gmailConfigs.labels['Unprocessed']]
                 }
             },
             // Callback
@@ -104,8 +104,8 @@ exports.markMessageUnprocessible = function (message, callback) {
                 userId: 'me',
                 id: message.id,
                 resource: {
-                    addLabelIds: [LABELS['Unprocessible']],
-                    removeLabelIds: [LABELS['Enqueued'], LABELS['Unprocessed']]
+                    addLabelIds: [gmailConfigs.labels['Unprocessible']],
+                    removeLabelIds: [gmailConfigs.labels['Enqueued'], gmailConfigs.labels['Unprocessed']]
                 }
             },
             // Callback
@@ -136,8 +136,8 @@ exports.markMessageProcessed = function (message, callback) {
                 userId: 'me',
                 id: message.id,
                 resource: {
-                    addLabelIds: [LABELS['Processed']],
-                    removeLabelIds: [LABELS['Unprocessed'], LABELS['Enqueued']]
+                    addLabelIds: [gmailConfigs.labels['Processed']],
+                    removeLabelIds: [gmailConfigs.labels['Unprocessed'], gmailConfigs.labels['Enqueued']]
                 }
             },
             // Callback
@@ -167,7 +167,7 @@ exports.getMessage = function (messageId, callback) {
                 userId: 'me',
                 id: messageId,
                 format: 'full',
-                metadataHeaders: METADATA_HEADERS
+                metadataHeaders: gmailConfigs.metadata_headers
             },
             // Callback
             (err, message) => {
