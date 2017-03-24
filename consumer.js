@@ -74,6 +74,9 @@ const app = Consumer.create({
             //-----------------------------------------------------------------            
             .catch((err) => {
                 
+                console.log(err.message);
+                console.log(err.src.message);
+
                 if (err instanceof RecoverableError)
                     return done(err); // Leave message at queue-front, retry a few times before pushed to dead-letter-queue
                 

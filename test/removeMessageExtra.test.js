@@ -1,6 +1,7 @@
 var lodash = require('lodash');
 var fs = require('fs');
 var message = fs.readFileSync('rawMessage', {encoding: 'utf8'});
+// console.log(message);
 
 // Remove quotes
 message = message.replace(/(^\w.+:\r?\n)?(^>.*(\r?\n|$))+/gm, '');
@@ -9,7 +10,7 @@ message = message.replace(/(^\w.+:\r?\n)?(^>.*(\r?\n|$))+/gm, '');
 message = message.replace(/(\r?\n)+-- *\r?\n[^]+$/g, '');
 
 // Remove forwarded message notice
-message = message.replace(/(\r?\n)+(-+ *Forwarded message *-+)\r?\n(.+\n)+/gm, '');
+message = message.replace(/(\r?\n)+(-+ *Forwarded message *-+)\r?\n(.+\r?\n)+/gm, '');
 
 
 var metadata = message.match(/_______________ *\r?\n(.+\r?\n?)+/g);
@@ -21,5 +22,5 @@ metadata = lodash.chain(metadata)
                 .mapValues('1')
                 .value();
 
-fs.writeFileSync('parsedMessage', message);
+fs.writeFileSync(__dirname + '/parsedMessage', message);
 console.log(metadata);

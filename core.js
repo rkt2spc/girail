@@ -170,7 +170,7 @@ exports.removeMessageExtras = function (message, callback) {
         // Remove Gmail Extra
         message.content = message.content.replace(/(^\w.+:\r?\n)?(^>.*(\r?\n|$))+/gm, ''); // Reply Quotes
         message.content = message.content.replace(/(\r?\n)+-- *\r?\n[^]+$/g, ''); // Signature
-        message.content = message.content.replace(/(\r?\n)+(-+ *Forwarded message *-+)\r?\n(.+\n)+/gm, ''); // Forward notice
+        message.content = message.content.replace(/(\r?\n)+(-+ *Forwarded message *-+)\r?\n(.+\r?\n)+/gm, ''); // Forward notice
 
         //-------------------------
         // Remove Outlook Reply Quotes

@@ -1,6 +1,7 @@
 //========================================================================================================
 // Dependencies
 var async = require('async');
+var lodash = require('lodash');
 var JiraApi = require('jira-client');
 var helpers = require('./helpers');
 var database = require('./database');
@@ -48,15 +49,19 @@ exports.createIssue = function (message, callback) {
             var sourceMeta = message.metadata[mapping.metaName];
             var targetField = jiraConfigs.fields[mapping.fieldName];
 
-            if (targetField.schema.type === 'array')
-                jiraFields[targetField.id] = sourceMeta.split(/ *, */g);
+            if (targetField.schema.type === 'array') {
+                var arr = sourceMeta.split(/ *, */g);
+                jiraFields[targetField.id] = arr.map(f => lodash.kebabCase(f));
+            }
             else
                 jiraFields[targetField.id] = { value: sourceMeta };
         });
 
+        //-------------------------                
+        // Special parse
 
-        console.log(jiraFields);    
         //-------------------------
+        // Create new issue
         jiraService.addNewIssue({
             fields: jiraFields
         })

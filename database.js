@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------
 // Dependencies
 var helpers = require('./helpers');
-var AppError = require('./errors/AppError.js');
 var mongoose = require('mongoose');
 mongoose.Promise = global.Promise; //Use native ES6 Promise instead of Mongoose's default
 
@@ -36,8 +35,6 @@ exports.findReplySourceMapping = function (replyMessage, callback) {
             .findOne({ threadId: replyMessage.threadId, issueId: { $exists: true, $ne: null } })
             .exec((err, mapping) => {
                 if (err) return reject(err);
-                if (!mapping)
-                    return reject(new AppError({ code: 0, name: 'Empty Entry', message: 'Reply Source Unavailable'}));
                 
                 fulfill(mapping);
             });
