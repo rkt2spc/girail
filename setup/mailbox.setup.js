@@ -13,8 +13,8 @@ var OAuth2 = google.auth.OAuth2;
 
 //========================================================================================================
 // Lib Dependencies
-var configsAdapter = require('../configs-adapter');
-var utils = require('../utilities');
+var configsAdapter = require('../lib/configs-adapter');
+var utils = require('../lib/utilities');
 
 //========================================================================================================
 // Configurations
@@ -22,8 +22,12 @@ var gmailSettings = configsAdapter.loadGmailSettings();
 var mailboxSettings = configsAdapter.loadMailboxSettings();
 
 //========================================================================================================
+// Credentials
+var googleCredentials = configsAdapter.loadGoogleCredentials();
+
+//========================================================================================================
 // Get New Auth Tokens
-var getNewTokens = function(oauth2Client, callback) {
+var getNewTokens = function (oauth2Client, callback) {
 
     //-------------------------        
     var promise = new Promise((fulfill, reject) => {
@@ -92,47 +96,29 @@ module.exports = function (callback) {
     var promise = new Promise((fulfill, reject) => {
 
         console.log('\n\nInitializing Gmail setup...');
+        console.log('======================================================');
+
         async.eachSeries(mailboxSettings, (mailbox, next) => {
 
             //-------------------------            
-            console.log('======================================================');
             console.log('Setting up mailbox:', mailbox.name);
 
             //-------------------------               
-            if (!mailbox.credentials)
-                return reject(new Error(`Missing credentials for mailbox ${mailbox.name}`));
+            if (!mailbox.tokens)
+                return reject(new Error(`Missing tokens for mailbox ${mailbox.name}`));
 
-            //-------------------------            
-            var mailboxCredentials = JSON.parse(
-                Buffer.from(mailbox.credentials, 'base64').toString()
-            );
+            var tokens = JSON.parse(Buffer.from(mailbox.tokens, 'base64').toString('utf8'));
 
             //-------------------------        
             var oauth2Client = new OAuth2(
-                mailboxCredentials.installed.client_id,
-                mailboxCredentials.installed.client_secret,
-                mailboxCredentials.installed.redirect_uris[0]
+                googleCredentials.installed.client_id,
+                googleCredentials.installed.client_secret,
+                googleCredentials.installed.redirect_uris[0]
             );
+            oauth2Client.setCredentials(tokens);
 
             //-------------------------   
-            // Acquire authtokens   
-            var getTokens = null;
-            if (mailbox.tokens) {
-                getTokens = Promise.resolve(JSON.parse(
-                    Buffer.from(mailbox.tokens, 'base64').toString('utf8')
-                ));
-            }                
-            else {
-                getTokens = getNewTokens(oauth2Client)
-                    .then((tokens) => {
-                        mailbox.tokens = Buffer.from(JSON.stringify(tokens), 'utf8').toString('base64');
-                        return tokens;
-                    });
-            }
-
-            //-------------------------   
-            getTokens
-                .then((tokens) => oauth2Client.setCredentials(tokens))
+            Promise.resolve()
                 .then(() => listMailboxLabels(oauth2Client))
                 .then((labels) => mailbox.labels = labels)
                 .then(() => configsAdapter.updateMailboxSettings(mailboxSettings))

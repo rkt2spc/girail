@@ -1,0 +1,118 @@
+{
+    "id": "15afeb4b3080ec05",
+    "threadId": "15afeb4b3080ec05",
+    "labelIds": [
+        "UNREAD",
+        "IMPORTANT",
+        "CATEGORY_PERSONAL",
+        "Label_4",
+        "INBOX"
+    ],
+    "snippet": "Test new foward ---------- Forwarded message ---------- From: Tuan Nguyen &lt;nmtuan.dev@gmail.com&gt; Date: Wed, Nov 30, 2016 at 9:58 AM Subject: DMM To: tnt291195@gmail.com cc -- Tuan Nguyen",
+    "historyId": "29761",
+    "internalDate": "1490331938000",
+    "payload": {
+        "partId": "",
+        "mimeType": "text/plain",
+        "filename": "",
+        "headers": [
+            {
+                "name": "Delivered-To",
+                "value": "nmtuan.gg@gmail.com"
+            },
+            {
+                "name": "Received",
+                "value": "by 10.103.83.76 with SMTP id h73csp1082520vsb;        Thu, 23 Mar 2017 22:05:39 -0700 (PDT)"
+            },
+            {
+                "name": "X-Received",
+                "value": "by 10.36.164.75 with SMTP id v11mr1328529iti.101.1490331939448;        Thu, 23 Mar 2017 22:05:39 -0700 (PDT)"
+            },
+            {
+                "name": "Return-Path",
+                "value": "<nmtuan.dev@gmail.com>"
+            },
+            {
+                "name": "Received",
+                "value": "from mail-io0-x22e.google.com (mail-io0-x22e.google.com. [2607:f8b0:4001:c06::22e])        by mx.google.com with ESMTPS id k14si898545ioo.44.2017.03.23.22.05.39        for <nmtuan.gg@gmail.com>        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);        Thu, 23 Mar 2017 22:05:39 -0700 (PDT)"
+            },
+            {
+                "name": "Received-SPF",
+                "value": "pass (google.com: domain of nmtuan.dev@gmail.com designates 2607:f8b0:4001:c06::22e as permitted sender) client-ip=2607:f8b0:4001:c06::22e;"
+            },
+            {
+                "name": "Authentication-Results",
+                "value": "mx.google.com;       dkim=pass header.i=@gmail.com;       spf=pass (google.com: domain of nmtuan.dev@gmail.com designates 2607:f8b0:4001:c06::22e as permitted sender) smtp.mailfrom=nmtuan.dev@gmail.com;       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=gmail.com"
+            },
+            {
+                "name": "Received",
+                "value": "by mail-io0-x22e.google.com with SMTP id f84so9413785ioj.0        for <nmtuan.gg@gmail.com>; Thu, 23 Mar 2017 22:05:39 -0700 (PDT)"
+            },
+            {
+                "name": "DKIM-Signature",
+                "value": "v=1; a=rsa-sha256; c=relaxed/relaxed;        d=gmail.com; s=20161025;        h=mime-version:in-reply-to:references:from:date:message-id:subject:to         :cc;        bh=A04+qh6q8YgRTaaIWDsJNehdi+vnP/A1VFikrOHPtoM=;        b=RkEQrC5K9F1G5YmQql2P02jdxAEpgbRXlWSEP2U4wrTs0hro9z8kDgpNlzoYzdiCCC         1e0OjfgrlvPG5ecEy1oVaN3kvgo7bvalyqMiypJ5Q8YVDT2gg2tKz0AjCwadiPJA7uYW         DzZ7JK/Ni3vnEuP2Awut3gWpnPZdB03Ajsi6ad6J508LLpUMzNdvFrEyRTkIk1+y4UKl         V8ANshhos20J19WoD8MfWMxB4f4yzjz+eR/cC5delaMLVNvfvm4kY0WWXVjulqY4n5yd         kfGGDSCYHG79fSYF2HJoTqoPaf3N2tdONcRQT4gfedKFIAbWphNnHm0flMqkN0RHSerm         dUlQ=="
+            },
+            {
+                "name": "X-Google-DKIM-Signature",
+                "value": "v=1; a=rsa-sha256; c=relaxed/relaxed;        d=1e100.net; s=20161025;        h=x-gm-message-state:mime-version:in-reply-to:references:from:date         :message-id:subject:to:cc;        bh=A04+qh6q8YgRTaaIWDsJNehdi+vnP/A1VFikrOHPtoM=;        b=rDdHDWXQW2Jpz5XDgnFTVbRQ4d7ERlBDlJMaR+hZpWVtjuYcrQ3ZPx0Ii/GrUPWN3+         P77XyWwR8gFWoQQEhVRGSEYdjeWh9/iizrYZvyc9YVlcQr6c5ct97phWBhp6JpLtOI3f         ctFXp7OzhQjgJg0Gpgf30+7lzvi7aqAajDbmBivZWGPdvRXqGOZxx8casTfrG1hW64LD         k5fej2DPvZb3Caz/QZjs5gMzthKKG3PTiOlIOwjpEumIvmv6vvFNN8yR15JcWD9q+IKE         Pl3mRNGj5ArkIgGllAxFzLEvH1O/GizIKX2I8KKQYHw3RfjsAsw8sUf1c2BcfX/IeHGK         aE/Q=="
+            },
+            {
+                "name": "X-Gm-Message-State",
+                "value": "AFeK/H2SEtixPSKKIztUb6x67jlhw9H6sBhPfn/9kd+idigAQirvVU/YF6jn3RsHaJCe7xmeMpEGRtZq/DT7iQ=="
+            },
+            {
+                "name": "X-Received",
+                "value": "by 10.107.169.227 with SMTP id f96mr6488173ioj.199.1490331939185; Thu, 23 Mar 2017 22:05:39 -0700 (PDT)"
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Received",
+                "value": "by 10.79.209.54 with HTTP; Thu, 23 Mar 2017 22:05:38 -0700 (PDT)"
+            },
+            {
+                "name": "In-Reply-To",
+                "value": "<CAD+osk4DOtSk3rpPzRzqfkO+Hf57g04Th4PAuLWjjy0_xzf1zg@mail.gmail.com>"
+            },
+            {
+                "name": "References",
+                "value": "<CAD+osk4DOtSk3rpPzRzqfkO+Hf57g04Th4PAuLWjjy0_xzf1zg@mail.gmail.com>"
+            },
+            {
+                "name": "From",
+                "value": "Tuan Nguyen <nmtuan.dev@gmail.com>"
+            },
+            {
+                "name": "Date",
+                "value": "Fri, 24 Mar 2017 12:05:38 +0700"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<CAD+osk4guJ596zit5qcJ11w4mNmhi_hggr-J4p8a7xm_oUd8Gg@mail.gmail.com>"
+            },
+            {
+                "name": "Subject",
+                "value": "Fwd: DMM"
+            },
+            {
+                "name": "To",
+                "value": "Tuan Nguyen <nmtuan.gg@gmail.com>"
+            },
+            {
+                "name": "Cc",
+                "value": "nmtuan@fossil.com"
+            },
+            {
+                "name": "Content-Type",
+                "value": "text/plain; charset=UTF-8"
+            }
+        ],
+        "body": {
+            "size": 209,
+            "data": "VGVzdCBuZXcgZm93YXJkDQoNCg0KLS0tLS0tLS0tLSBGb3J3YXJkZWQgbWVzc2FnZSAtLS0tLS0tLS0tDQpGcm9tOiBUdWFuIE5ndXllbiA8bm10dWFuLmRldkBnbWFpbC5jb20-DQpEYXRlOiBXZWQsIE5vdiAzMCwgMjAxNiBhdCA5OjU4IEFNDQpTdWJqZWN0OiBETU0NClRvOiB0bnQyOTExOTVAZ21haWwuY29tDQoNCg0KY2MNCg0KDQotLSANClR1YW4gTmd1eWVuDQo="
+        }
+    },
+    "sizeEstimate": 3547
+}

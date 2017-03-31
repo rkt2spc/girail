@@ -1,7 +1,5 @@
 //========================================================================================================
 // Node Dependencies
-var path = require('path');
-var fs = require('fs');
 
 //========================================================================================================
 // External Dependencies
@@ -11,29 +9,16 @@ var JiraApi = require('jira-client');
 
 //========================================================================================================
 // Lib Dependencies
-var configsAdapter = require('../configs-adapter');
-var utils = require('../utilities');
+var configsAdapter = require('../lib/configs-adapter');
+var utils = require('../lib/utilities');
 
 //========================================================================================================
 // Configurations
 var jiraSettings = configsAdapter.loadJiraSettings();
+var jiraCredentials = configsAdapter.loadJiraCredentials();
 
 //========================================================================================================
 // Jira Service
-
-
-//========================================================================================================
-// List all custom fields
-var listJiraCustomFields = function (callback) {
-
-    //-------------------------
-    var promise = new Promise((fulfill, reject) => {
-
-    });
-
-    //-------------------------
-    return utils.wrapAPI(promise, callback);
-};
 
 //========================================================================================================
 // Exports
@@ -41,8 +26,9 @@ module.exports = function (callback) {
 
     //-------------------------   
     var promise = new Promise((fulfill, reject) => {
-        
+
         console.log('\n\nInitializing Jira setup...');
+        console.log('======================================================');
 
         //-------------------------   
         var jira = new JiraApi({
@@ -50,12 +36,12 @@ module.exports = function (callback) {
             protocol: 'https',
             host: jiraSettings.host,
             apiVersion: jiraSettings.api_version,
-            username: jiraSettings.credentials.username,
-            password: jiraSettings.credentials.password
+            username: jiraCredentials.username,
+            password: jiraCredentials.password
         });
 
         //-------------------------   
-        jira.listFields({custom: true})
+        jira.listFields({ custom: true })
             .then((fields) => {
 
                 jiraSettings.fields = lodash.chain(fields)

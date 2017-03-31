@@ -43,7 +43,7 @@ if (!mailbox) {
 //========================================================================================================
 // Parse JSON Credentials
 try {
-    var credentials = Buffer.from(fs.readFileSync(path.resolve(credentials_path)), 'utf8').toString('base64');  
+    var credentials = Buffer.from(fs.readFileSync(path.resolve(credentials_path), 'utf8')).toString('base64');  
 }
 catch (e) {
     console.log('Failed to parse json credentials');
