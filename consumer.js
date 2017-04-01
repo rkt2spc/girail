@@ -157,10 +157,10 @@ logger.info('Consuming messages...');
 app.start();
 
 //========================================================================================================
-process.once('SIGINT', () => {
-    logger.info('\nStopping...');
-    app.stop();
-});
+// process.once('SIGINT', () => {
+//     logger.info('\nStopping...');
+//     app.stop();
+// });
 process.once('SIGUSR2', () => {
     logger.info('\nStopping...');
     app.stop();
