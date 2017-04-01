@@ -45,3 +45,6 @@ deploy-bundle.zip
 
 # Configurations
 configs
+
+# Credentials
+credentials
