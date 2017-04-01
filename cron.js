@@ -1,84 +1,9 @@
-//========================================================================================================
-// External Depdendencies
 var async = require('async');
+var cronTask = require('./cron-task');
 
-//========================================================================================================
-// Lib Depdendencies
-var configsAdapter = require('./lib/configs-adapter');
-var utils = require('./lib/utilities');
-var gmail = require('./lib/gmail');
-var queue = require('./lib/queue');
-
-//========================================================================================================
-// Configurations
-var gmailSettings = configsAdapter.loadGmailSettings();
-var mailboxSettings = configsAdapter.loadMailboxSettings();
-
-//========================================================================================================
-// Cron process
-var mailboxes = gmail.generateMailboxes();
-console.log(`Processing ${mailboxes.length} mailboxes`);
-async.eachSeries(mailboxes,
-    (mailbox, processNextMailbox) => {
-
-        console.log("==============================================");
-        console.log(`Processing mailbox <${mailbox.name}>`);
-        mailbox.retrieveUnprocessedMessages((err, messages) => {
-            if (err) {
-                console.log(err);
-                return processNextMailbox();
-            }
-            if (messages.length === 0) {
-                console.log(`Done, mailbox ${mailbox.name} has nothing to process`);
-                return processNextMailbox();
-            }
-
-            messages.reverse();
-            console.log(`Begin processing ${messages.length} messages`);
-            // Perform iterating asynchronously
-            async.eachSeries(
-                // Data source
-                messages,
-                // Iterating function
-                (message, next) => {
-                    console.log('--------------------------------------------------');
-                    console.log(`Processing message ${message.id}`);
-
-                    message.mailbox = mailbox.name;
-                    queue.sendMessage(JSON.stringify(message), (err, data) => {
-
-                        // Can't enqueue
-                        if (err) {
-                            console.log('Failed to enqueue message!');
-                            console.log(err);
-                            next();
-                            return;
-                        }
-
-                        console.log(`Message ${message.id} enqueued`);
-                        // Mark message enqueued
-                        mailbox.markMessageEnqueued(message, (err) => {
-
-                            if (err) {
-                                console.log('Failed to mark message enqueued!');
-                                console.log(err);
-                                next();
-                                return;
-                            }
-
-                            console.log(`Message ${message.id} marked as enqueued`);
-                            next();
-                        });
-                    });
-                },
-                // Final callback
-                (err) => {
-                    if (err) return console.log(err);
-                    processNextMailbox();
-                }
-            );
-        });
-    },
-    (err) => {
-        if (err) return console.log(err.message);
-    });
+async.forever((next) => {
+    // After a Task done, wait 60 sec before doing next task
+    cronTask(() => setTimeout(() => next(), 30000));
+}, (err) => {
+    console.log('Bùm chết cron rồi ba ơi');
+});

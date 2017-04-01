@@ -93,9 +93,9 @@ oauth2Client.getToken(code, function (err, tokens) {
                 gmail.users.labels.create({ userId: 'me', resource: { name: label } }, (err) => {
                     if (err && err.code !== 409) return cb(err);
                     if (err && err.code === 409)
-                        utils.logStatus(label, 'Existed')();
+                        console.log(utils.padSpacesRight(label), 'Existed');
                     else
-                        utils.logStatus(label, 'Created')();
+                        console.log(utils.padSpacesRight(label), 'Created');
 
                     return cb();
                 });
@@ -135,10 +135,11 @@ oauth2Client.getToken(code, function (err, tokens) {
             return console.log(err.message);
 
         console.log('\n===================================================');
-        console.log('Review your setting (credentials are encoded):');
+        console.log('Review your mailbox settings (credentials are encoded):');
         console.log(nativeUtil.inspect(newMailbox, false, null));
         if (readlineSync.keyInYN('\nIs this okay?')) {
-            configsAdapter.addMailbox(newMailbox);
+            mailboxSettings.push(newMailbox);
+            configsAdapter.updateMailboxSettings(mailboxSettings);
             console.log('Settings Updated');
         }
         else

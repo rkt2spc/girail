@@ -5,7 +5,7 @@ gulp.task('consume', function () {
 
     var nodemon = plugins.nodemon({
         script: 'consumer.js',
-        watch: ['./configs'],
+        watch: ['./configs', './credentials'],
         // ignore: ['build', 'src', 'gulpfile.js'],
         ext: 'yaml',
         // env: { 'NODE_ENV': 'development' }
