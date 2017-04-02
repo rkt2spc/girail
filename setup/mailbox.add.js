@@ -93,9 +93,9 @@ oauth2Client.getToken(code, function (err, tokens) {
                 gmail.users.labels.create({ userId: 'me', resource: { name: label } }, (err) => {
                     if (err && err.code !== 409) return cb(err);
                     if (err && err.code === 409)
-                        console.log(utils.padSpacesRight(label), 'Existed');
+                        console.log(utils.padSpacesRight(label, 30), 'Existed');
                     else
-                        console.log(utils.padSpacesRight(label), 'Created');
+                        console.log(utils.padSpacesRight(label, 30), 'Created');
 
                     return cb();
                 });
