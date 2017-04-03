@@ -23,7 +23,7 @@ const Consumer = require('sqs-consumer');
 const app = Consumer.create({
     sqs: queue.sqsService,
     queueUrl: queue.url,
-    visibilityTimeout: 720,
+    visibilityTimeout: 1800,
     waitTimeSeconds: 20,
     handleMessage: (message, done) => {
 
