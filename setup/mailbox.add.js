@@ -119,11 +119,11 @@ oauth2Client.getToken(code, function (err, tokens) {
             console.log('\n-----------------------------');
             console.log('Creating project mappings:');
             do {
-                var cc = readlineSync.question('Message CCs (i.e: foo@mail.com,bar@mail.com): ');
+                var receivers = readlineSync.question('Message Receivers (i.e: foo@mail.com,bar@mail.com): ');
                 var projectKey = readlineSync.question('Project KEY (i.e: CYC): ');
 
                 newMailbox.project_mappings.push({
-                    cc: cc.split(/ *, */g),
+                    receivers: receivers.split(/ *, */g),
                     project: { key: projectKey }
                 });
             }
