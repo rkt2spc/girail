@@ -25,6 +25,7 @@ var newJiraSettings = {
         { metaName: 'App version', fieldName: 'Affects Version/s' },
         { metaName: 'Tags', fieldName: 'Labels' }
     ],
+    brand_options: ['White Label', 'Kate Spade', 'Michael Kors', 'Skagen', 'Chaps', 'Diesel', 'Emporio Armani', 'Armani Exchange', 'Tony Burch', 'DKNY', 'Marc Jacobs', 'Relic', 'Michele'],
     required_fields: ['Brand', 'Affects Version/s', 'Labels'],
     fields: {}
 };
