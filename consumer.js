@@ -150,7 +150,7 @@ const app = Consumer.create({
 
 //========================================================================================================
 app.on('error', (err) => logger.error(err));
-app.on('stopped', () => process.exit());
+app.on('stopped', () => process.kill(process.pid, 'SIGUSR2'));
 
 //========================================================================================================
 logger.info('Consuming messages...');

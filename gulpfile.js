@@ -6,14 +6,18 @@ gulp.task('consume', function () {
     var nodemon = plugins.nodemon({
         script: 'consumer.js',
         watch: ['./configs', './credentials'],
-        // ignore: ['build', 'src', 'gulpfile.js'],
-        ext: 'yaml',
-        // env: { 'NODE_ENV': 'development' }
+        ext: 'yaml json',
     });
 
-    nodemon.on('crash', function () {
-        var delay = 3;
-        nodemon.emit('restart', delay);
+    return nodemon;
+});
+
+gulp.task('cron', function () {
+
+    var nodemon = plugins.nodemon({
+        script: 'cron.js',
+        watch: ['./configs', './credentials'],
+        ext: 'yaml json',
     });
 
     return nodemon;
