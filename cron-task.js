@@ -77,7 +77,7 @@ module.exports = function (cronDone) {
                     },
                     // Final callback
                     (err) => {
-                        if (err) return logger.error(err);
+                        if (err) logger.error(err);
                         processNextMailbox();
                     }
                 );

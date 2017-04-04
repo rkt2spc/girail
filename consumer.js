@@ -94,7 +94,6 @@ const app = Consumer.create({
 
                 if (err instanceof RecoverableError) {
                     logger.info('Got Recoverable Error:', err.message);
-                    if (err.src) logger.info(err.src.message);
                     logger.warn(err);
                     queue.terminateMessageVisibilityTimeout(message.ReceiptHandle, (err2, data) => {
                         if (err2) {
@@ -109,23 +108,32 @@ const app = Consumer.create({
 
                 if (err instanceof UnrecoverableError) {
                     logger.info('Got Unrecoverable Error:', err.message);
-                    if (err.src) logger.info(err.src.message);
                     logger.error(err);
                     return done(); // Remove the message and do manual recovery based on logs
                 }
 
                 if (err instanceof DropSignal) {
                     logger.info('Got Drop Signal:', err.message);
-                    if (err.src) logger.info(err.src.message);
                     logger.warn(err);
                     return done();
                 }
 
                 if (err instanceof RequeueSignal) {
                     logger.info('Got Requeue Signal:', err.message);
-                    if (err.src) logger.info(err.src.message);
-                    logger.warn(err);
+                    
+                    if (gmailMessage.requeueCount && gmailMessage.requeueCount >= 8) {
+                        var dsig = new DropSignal({
+                            code: 'DS008',
+                            message: `Message have been requeued too many times (${gmailMessage.requeueCount} times)`,
+                        });
+                        logger.info(dsig.message);
+                        logger.warn(dsig);
+                        return done();
+                    }
 
+                    logger.warn(err);
+                    if (gmailMessage.requeueCount) gmailMessage.requeueCount++;
+                    else gmailMessage.requeueCount = 1;
                     queue.sendMessage(JSON.stringify(gmailMessage), (err, data) => {
 
                         if (err) {
@@ -135,16 +143,18 @@ const app = Consumer.create({
                                 src: err
                             });
                             logger.info('Got Recoverable Error:', uerr);
-                            if (uerr.src) logger.info(uerr.src.message);
                             logger.warn(uerr);
-                            return done(err);
+                            return done(uerr);
                         }
 
                         return done();
                     });
                 }
             })
-            .catch((e) => logger.error('WTF:', e));
+            .catch((e) => {
+                logger.error('WTF:', e);
+                done(e);
+            });
     }
 });
 
