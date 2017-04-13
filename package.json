@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Automation System: Reading Gmail and create tickets in Jira (Lol, that's how you got the name girail)",
   "main": "index.js",
+  "engines": {
+    "node": "7.9.x",
+    "npm": "4.2.x"
+  },
   "dependencies": {
     "async": "^2.1.5",
     "aws-sdk": "^2.28.0",
