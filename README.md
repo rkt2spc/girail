@@ -1,16 +1,29 @@
 # Girail
-Automation System: Reading Gmail and create tickets in Jira (Lol, that's how you got the name girail)  
+Automation System: Reading Gmail and create tickets in Jira
 
 # Prerequisite
 ### Google and GMail
-Go to Google IAM acquire your oauth2 credentials, save it as "/credentials/oauth-secret.json"
-Run "node run-once.js" to generate credentials (might need to follow oauth2 flow)  
+Go to Google Developer Console enable GMail APi and aquire oauth2 credentials (type: others...)
+
+### Jira
+Username password to an account that can create issue/comments/attachments
+
+### NodeJs
+Node ^7.8
+
 ### Database
-Create a "/credentials/database-conf.json" with a single field "database_url" containing your mongodb connection string
+MongoDb installed
+
 ### AWS
-Setup IAM configs for AWS-SDK
-Create a "/credentials/aws-conf.json" with a single field "queue_url" containing the url to your SQS
+Setup IAM configs for AWS-SDK on your production environment
+Two SQS queues: one for mail-message, one as a dead-letter-queue
 
 # Setup
-Set up a cron-job that run "node cron.js"
-Set up a daemon that run "node consumer.js"
+Run setup scripts and follow instructions
+```
+node setup/gmail.setup.js
+node setup/aws.setup.js
+node setup/database.setup.js
+node setup/jira.setup.js
+node setup/mailbox.add.js
+```
