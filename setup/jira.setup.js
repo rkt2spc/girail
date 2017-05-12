@@ -20,12 +20,35 @@ var newJiraSettings = {
     api_version: '2',
     default_issue_type: { name: 'Bug' },
     default_reporter: { name: 'admin' },
-    metadata_mapping: [
-        { metaName: 'Brand', fieldName: 'Brand' },
-        { metaName: 'App version', fieldName: 'Affects Version/s' },
-        { metaName: 'Tags', fieldName: 'Labels' }
+    brand_options: [
+        'White Label',
+        'Kate Spade',
+        'Michael Kors',
+        'Skagen',
+        'Chaps',
+        'Diesel',
+        'Emporio Armani',
+        'Armani Exchange',
+        'Tony Burch',
+        'DKNY',
+        'Marc Jacobs',
+        'Relic',
+        'Michele'
     ],
-    brand_options: ['White Label', 'Kate Spade', 'Michael Kors', 'Skagen', 'Chaps', 'Diesel', 'Emporio Armani', 'Armani Exchange', 'Tony Burch', 'DKNY', 'Marc Jacobs', 'Relic', 'Michele'],
+    brand_version_abbr: {
+        'Kate Spade': 'KS',
+        'Michael Kors': 'MK',
+        'Skagen': 'SK',
+        'Chaps': 'CH',
+        'Diesel': 'DI',
+        'Emporio Armani': 'EA',
+        'Armani Exchange': 'AX',
+        'Tory Burch': 'TB',
+        'DKNY': 'NY',
+        'Marc Jacobs': 'MJ',
+        'Relic': 'RL',
+        'Michele': 'MI'
+    },
     required_fields: ['Brand', 'Affects Version/s', 'Labels'],
     fields: {}
 };

@@ -25,6 +25,7 @@ const app = Consumer.create({
     queueUrl: queue.url,
     visibilityTimeout: 1800,
     waitTimeSeconds: 20,
+    terminateVisibilityTimeout: true,    
     handleMessage: (message, done) => {
 
         if (!message || !message.Body) {
@@ -92,59 +93,64 @@ const app = Consumer.create({
             //-----------------------------------------------------------------            
             .catch((err) => {
 
+                // Recoverable Error
                 if (err instanceof RecoverableError) {
                     logger.info('Got Recoverable Error:', err.message);
                     logger.warn(err);
-                    queue.terminateMessageVisibilityTimeout(message.ReceiptHandle, (err2, data) => {
-                        if (err2) {
-                            logger.info('Got Recoverable Error:', err2.message);
-                            logger.warn(err2);
-                            return done(err2);
-                        }
-
-                        return done(err);
-                    });
+                    return done(err); // Leave message on queue for retrying
                 }
 
+                // Unrecoverable Error
                 if (err instanceof UnrecoverableError) {
                     logger.info('Got Unrecoverable Error:', err.message);
                     logger.error(err);
                     return done(); // Remove the message and do manual recovery based on logs
                 }
 
+                // Drop Signal
                 if (err instanceof DropSignal) {
                     logger.info('Got Drop Signal:', err.message);
                     logger.warn(err);
-                    return done();
+                    return done(); // Drop message
                 }
 
+                // Requeue Signal
                 if (err instanceof RequeueSignal) {
                     logger.info('Got Requeue Signal:', err.message);
                     
+                    // Requeued too many times
                     if (gmailMessage.requeueCount && gmailMessage.requeueCount >= 8) {
-                        var dsig = new DropSignal({
+                        var drop_signal = new DropSignal({
                             code: 'DS008',
                             message: `Message have been requeued too many times (${gmailMessage.requeueCount} times)`,
+                            data: {
+                                messageId: gmailMessage.id,
+                                mailbox: gmailMessage.mailbox
+                            }
                         });
-                        logger.info(dsig.message);
-                        logger.warn(dsig);
+                        logger.info(drop_signal.message);
+                        logger.warn(drop_signal);
                         return done();
                     }
 
                     logger.warn(err);
                     if (gmailMessage.requeueCount) gmailMessage.requeueCount++;
                     else gmailMessage.requeueCount = 1;
-                    queue.sendMessage(JSON.stringify(gmailMessage), (err, data) => {
+                    queue.sendMessage(JSON.stringify(gmailMessage), (sqs_err, data) => {
 
-                        if (err) {
-                            var uerr = new RecoverableError({
+                        if (sqs_err) {
+                            var recoverable_error = new RecoverableError({
                                 code: 'RE009',
                                 message: 'SQS Failure: Failed to re-enqueue message',
-                                src: err
+                                src: sqs_err,
+                                data: {
+                                    messageId: gmailMessage.id,
+                                    mailbox: gmailMessage.mailbox
+                                }
                             });
-                            logger.info('Got Recoverable Error:', uerr);
-                            logger.warn(uerr);
-                            return done(uerr);
+                            logger.info(recoverable_error.message);
+                            logger.warn(recoverable_error);
+                            return done(recoverable_error);
                         }
 
                         return done();
