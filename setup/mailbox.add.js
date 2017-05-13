@@ -30,7 +30,7 @@ var newMailbox = {
     active: true,
     whitelist: null,
     blacklist: null,
-    project_mappings: [],
+    projects: [],
     tokens: null,
     labels: {}
 };
@@ -80,7 +80,7 @@ oauth2Client.getToken(code, function (err, tokens) {
                 console.log(`Mailbox recognized: ${newMailbox.name}`);
 
                 if (mailboxSettings && mailboxSettings.length !== 0 && mailboxSettings.map(m => m.name).includes(newMailbox.name))
-                    if (readlineSync.keyInYN(`A mailbox with the name ${newMailbox.name} already exists. Are you sure you want to override it?`))
+                    if (!readlineSync.keyInYN(`A mailbox with the name ${newMailbox.name} already exists. Do you want to override it?`))
                         return next(new Error('Cancelled'));
 
                 next();
@@ -117,17 +117,36 @@ oauth2Client.getToken(code, function (err, tokens) {
         },
         function (next) {
             console.log('\n-----------------------------');
-            console.log('Creating project mappings:');
+            console.log('Creating mailbox projects:');
             do {
-                var receivers = readlineSync.question('Message Receivers (i.e: foo@mail.com,bar@mail.com): ');
-                var projectKey = readlineSync.question('Project KEY (i.e: CYC): ');
+                var project = {
+                    key: readlineSync.question('Project key: '),
+                    receivers: readlineSync.question('Message receivers (separate by comma): ').split(/ *, */g),
+                    metadata_mappings: []
+                };
+                
+                // Add metadata mapping
+                do {
+                    console.log(`\n>>>> Project [${project.key}] - Adding metadata mapping`);
+                    // Create metadata mapping
+                    var mapping = {
+                        meta: readlineSync.question('Meta name: '),
+                        field: readlineSync.question('Jira field: ')
+                    };
 
-                newMailbox.project_mappings.push({
-                    receivers: receivers.split(/ *, */g),
-                    project: { key: projectKey }
-                });
+                    var meta_types = ['array', 'string', 'options'];
+                    mapping.type = meta_types[readlineSync.keyInSelect(meta_types, 'Meta type: ', {cancel: false})];
+                    
+                    if (mapping.type === 'options')
+                        mapping.options = readlineSync.question('Meta options (separate by comman): ').split(/ *, */g);
+                                        
+                    project.metadata_mappings.push(mapping);
+                }
+                while(readlineSync.keyInYN(`\nAdd another mapping? (This can be edited later)`));
+
+                newMailbox.projects.push(project);
             }
-            while (readlineSync.keyInYN('Do you want to add more mappings? (This can be edited later)'));
+            while (readlineSync.keyInYN('Add another projects? (This can be edited later)'));
             next();
         }
     ], (err, result) => {
