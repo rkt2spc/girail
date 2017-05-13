@@ -138,7 +138,7 @@ oauth2Client.getToken(code, function (err, tokens) {
                     mapping.type = meta_types[readlineSync.keyInSelect(meta_types, 'Meta type: ', {cancel: false})];
                     
                     if (mapping.type === 'options')
-                        mapping.options = readlineSync.question('Meta options (separate by comman): ').split(/ *, */g);
+                        mapping.options = readlineSync.question('Meta options (separate by comma): ').split(/ *, */g);
                                         
                     project.metadata_mappings.push(mapping);
                 }
@@ -146,7 +146,7 @@ oauth2Client.getToken(code, function (err, tokens) {
 
                 newMailbox.projects.push(project);
             }
-            while (readlineSync.keyInYN('Add another projects? (This can be edited later)'));
+            while (readlineSync.keyInYN('\nAdd another projects? (This can be edited later)'));
             next();
         }
     ], (err, result) => {
