@@ -20,35 +20,6 @@ var newJiraSettings = {
     api_version: '2',
     default_issue_type: { name: 'Bug' },
     default_reporter: { name: 'admin' },
-    brand_options: [
-        'White Label',
-        'Kate Spade',
-        'Michael Kors',
-        'Skagen',
-        'Chaps',
-        'Diesel',
-        'Emporio Armani',
-        'Armani Exchange',
-        'Tony Burch',
-        'DKNY',
-        'Marc Jacobs',
-        'Relic',
-        'Michele'
-    ],
-    brand_version_abbr: {
-        'Kate Spade': 'KS',
-        'Michael Kors': 'MK',
-        'Skagen': 'SK',
-        'Chaps': 'CH',
-        'Diesel': 'DI',
-        'Emporio Armani': 'EA',
-        'Armani Exchange': 'AX',
-        'Tory Burch': 'TB',
-        'DKNY': 'NY',
-        'Marc Jacobs': 'MJ',
-        'Relic': 'RL',
-        'Michele': 'MI'
-    },
     required_fields: ['Brand', 'Affects Version/s', 'Labels'],
     fields: {}
 };
@@ -62,7 +33,10 @@ console.log('\n\nInitializing Jira setup...');
 console.log('======================================================');
 newJiraSettings.host = readlineSync.question('Enter your jira hostname (required): ');
 newJiraCredentials.username = readlineSync.question('Enter your jira username (required): ');
-newJiraCredentials.password = readlineSync.question('Enter your jira password (required): ');
+newJiraCredentials.password = readlineSync.question('Enter your jira password (required): ', {
+    hideEchoBack: true,
+    mask: '*'
+});
 newJiraSettings.default_issue_type.name = readlineSync.question('Enter your jira default issue type (default Bug): ');
 newJiraSettings.default_reporter.name = readlineSync.question('Enter your jira default reporter (default admin): ');
 
@@ -82,7 +56,8 @@ var jira = new JiraApi({
     password: newJiraCredentials.password
 });
 
-console.log('Getting Jira required fields');
+console.log('======================================================');
+console.log('Getting Jira required fields:', newJiraSettings.required_fields);
 jira.listFields()
     .then((fields) => {
 
@@ -91,11 +66,12 @@ jira.listFields()
             console.log('Not enough Jira required fields, please alert an administrator to create them');
             return;
         }
+        else console.log('All required fields are present!');
 
         newJiraSettings.fields = lodash.chain(fields)
             .sortBy('name')
             .keyBy('name')
-            .mapValues(v => { return { id: v.id, key: v.key, type: v.schema.type }; })
+            .mapValues('id')
             .value();
 
         console.log('======================================================');
@@ -109,5 +85,7 @@ jira.listFields()
             configsAdapter.updateJiraCredentials(newJiraCredentials);
             console.log('Jira Credentials Updated');
         }
+        else
+            console.log('Cancelled');
     })
     .catch((err) => console.log(err));
