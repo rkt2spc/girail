@@ -56,7 +56,7 @@ var jira = new JiraApi({
     password: newJiraCredentials.password
 });
 
-console.log('======================================================');
+console.log('\n======================================================');
 console.log('Getting Jira required fields:', newJiraSettings.required_fields);
 jira.listFields()
     .then((fields) => {
@@ -74,7 +74,7 @@ jira.listFields()
             .mapValues('id')
             .value();
 
-        console.log('======================================================');
+        console.log('\n======================================================');
         console.log('Review your Jira settings:');
         console.log(nativeUtil.inspect(newJiraSettings));
         console.log('\nReview your Jira credentials:');
