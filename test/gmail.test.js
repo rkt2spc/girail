@@ -1,14 +1,12 @@
-var assert = require('assert');
-var core = require('core');
+const assert = require('assert');
+const core = require('core');
 
-describe('core', function () {
-    
-    describe('#formatMessage', function () {
-        it('should remove reply-message quote', function (done) {
-            
-            var messages = {
-                headers: [{name: 'In-Reference-To', value: 'blah-blah'}],
-            }
-        });
+describe('core', () => {
+  describe('#formatMessage', () => {
+    it('should remove reply-message quote', (done) => {
+      const messages = {
+        headers: [{ name: 'In-Reference-To', value: 'blah-blah' }],
+      };
     });
+  });
 });

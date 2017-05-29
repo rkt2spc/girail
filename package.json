@@ -2,59 +2,48 @@
   "name": "girail",
   "version": "1.0.0",
   "description": "Automation System: Reading Gmail and create tickets in Jira (Lol, that's how you got the name girail)",
+  "homepage": "https://github.com/rocketspacer/girail#readme",
+  "author": "nmtuan@fossil.com",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rocketspacer/girail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rocketspacer/girail/issues"
+  },
   "main": "index.js",
+  "scripts": {
+    "lint": "eslint --ignore-path .gitignore --cache **/*.js"
+  },
   "engines": {
     "node": "7.9.x",
     "npm": "4.2.x"
   },
   "dependencies": {
-    "async": "^2.1.5",
-    "aws-sdk": "^2.28.0",
-    "fs-extra": "^2.1.2",
-    "googleapis": "^18.0.0",
+    "async": "^2.4.1",
+    "aws-sdk": "^2.58.0",
+    "fs-extra": "^3.0.1",
+    "googleapis": "^19.0.0",
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
     "gulp-nodemon": "^2.2.1",
-    "jira-client": "^6.0.0",
-    "js-yaml": "^3.8.2",
+    "jira-client": "^6.4.0",
+    "js-yaml": "^3.8.4",
     "lodash": "^4.17.4",
-    "mongoose": "^4.9.0",
+    "mongoose": "^4.10.3",
     "readline-sync": "^1.4.7",
     "request": "^2.81.0",
     "sqs-consumer": "^3.5.0",
     "winston": "^2.3.1",
-    "winston-mongodb": "^2.0.8",
-    "yamljs": "^0.2.8",
-    "yargs": "^7.0.2"
+    "yargs": "^8.0.1"
   },
   "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.3.0",
+    "husky": "^0.13.4",
     "jshint": "^2.9.4",
-    "mocha": "^3.2.0"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rocketspacer/girail.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/rocketspacer/girail/issues"
-  },
-  "homepage": "https://github.com/rocketspacer/girail#readme",
-  "jshintConfig": {
-    "esversion": 6,
-    "eqeqeq": true,
-    "undef": true,
-    "nocomma": true,
-    "node": true,
-    "mocha": true,
-    "predef": [
-      "Utils",
-      "Configs",
-      "App"
-    ]
+    "mocha": "^3.4.2"
   }
 }

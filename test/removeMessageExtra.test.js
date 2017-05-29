@@ -1,6 +1,6 @@
-var lodash = require('lodash');
-var fs = require('fs');
-var message = fs.readFileSync('rawMessage', {encoding: 'utf8'});
+const lodash = require('lodash');
+const fs = require('fs');
+let message = fs.readFileSync('rawMessage', { encoding: 'utf8' });
 // console.log(message);
 
 // Remove quotes
@@ -13,7 +13,7 @@ message = message.replace(/(\r?\n)+-- *\r?\n[^]+$/g, '');
 message = message.replace(/(\r?\n)+(-+ *Forwarded message *-+)\r?\n(.+\r?\n)+/gm, '');
 
 
-var metadata = message.match(/_______________ *\r?\n(.+\r?\n?)+/g);
+let metadata = message.match(/_______________ *\r?\n(.+\r?\n?)+/g);
 metadata = lodash.chain(metadata)
                 .flatMapDeep(m => m.match(/[^\r\n]+/g))
                 .map(m => m.split(/ *: */g))
