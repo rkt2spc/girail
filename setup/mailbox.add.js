@@ -1,10 +1,10 @@
-//= =======================================================================================================
+/* eslint no-console: off */
+
+//------------------------------------------------------------------------------
 // Node Dependencies
-const fs = require('fs');
-const path = require('path');
 const nativeUtil = require('util');
 
-//= =======================================================================================================
+//------------------------------------------------------------------------------
 // External Dependencies
 const lodash = require('lodash');
 const async = require('async');
@@ -12,18 +12,17 @@ const readlineSync = require('readline-sync');
 const google = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
 
-//= =======================================================================================================
+//------------------------------------------------------------------------------
 // Lib Dependencies
-const utils = require('../lib/utilities');
 const configsAdapter = require('../lib/configs-adapter');
 
-//= =======================================================================================================
+//------------------------------------------------------------------------------
 // Configurations
 const gmailSettings = configsAdapter.loadGmailSettings();
 const googleCredentials = configsAdapter.loadGoogleCredentials();
 const mailboxSettings = configsAdapter.loadMailboxSettings();
 
-//= =======================================================================================================
+//------------------------------------------------------------------------------
 // Arguments
 const newMailbox = {
   name      : null,
@@ -35,13 +34,13 @@ const newMailbox = {
   labels    : {},
 };
 
-//= =======================================================================================================
+//------------------------------------------------------------------------------
 console.log('\n===================================================');
 console.log('Obtaining access tokens...');
 const oauth2Client = new OAuth2(
-    googleCredentials.installed.client_id,
-    googleCredentials.installed.client_secret,
-    googleCredentials.installed.redirect_uris[0]
+  googleCredentials.installed.client_id,
+  googleCredentials.installed.client_secret,
+  googleCredentials.installed.redirect_uris[0]
 );
 
 // Get authorization code
@@ -53,9 +52,9 @@ console.log('Authorize this app by visiting this url:\n' + authUrl);
 const code = readlineSync.question('Enter the code from that page here: ');
 
 // Exchange code for token
-oauth2Client.getToken(code, (err, tokens) => {
-  if (err) {
-    console.log(err.message);
+oauth2Client.getToken(code, (error, tokens) => {
+  if (error) {
+    console.log(error.message);
     return;
   }
   oauth2Client.setCredentials(tokens);
@@ -69,7 +68,8 @@ oauth2Client.getToken(code, (err, tokens) => {
   console.log('\n===================================================');
   console.log('Receiving Gmail infos...');
   async.waterfall([
-    function (next) {
+    //-------------------------
+    (next) => {
       gmail.users.getProfile({
         userId: 'me',
       }, (err, profile) => {
@@ -85,13 +85,15 @@ oauth2Client.getToken(code, (err, tokens) => {
         next();
       });
     },
-    function (next) {
+    //-------------------------
+    (next) => {
       console.log('\n-----------------------------');
       console.log('Creating required labels...');
       async.each(gmailSettings.required_labels, (label, cb) => {
         gmail.users.labels.create({ userId: 'me', resource: { name: label } }, (err) => {
           if (err && err.code !== 409) return cb(err);
-          if (err && err.code === 409) { console.log(utils.padSpacesRight(label, 30), 'Existed'); } else { console.log(utils.padSpacesRight(label, 30), 'Created'); }
+          if (err && err.code === 409) console.log(lodash.padEnd(label, 30), 'Existed');
+          else console.log(lodash.padEnd(label, 30), 'Created');
 
           return cb();
         });
@@ -100,7 +102,7 @@ oauth2Client.getToken(code, (err, tokens) => {
         else next();
       });
     },
-    function (next) {
+    (next) => {
       gmail.users.labels.list({ userId: 'me' }, (err, response) => {
         newMailbox.labels = lodash.chain(response.labels)
                     .filter((l) => gmailSettings.required_labels.includes(l.name))
@@ -111,7 +113,7 @@ oauth2Client.getToken(code, (err, tokens) => {
         next();
       });
     },
-    function (next) {
+    (next) => {
       console.log('\n-----------------------------');
       console.log('Creating mailbox projects:');
       do {

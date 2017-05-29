@@ -1,3 +1,5 @@
+/* eslint no-console: off */
+
 //------------------------------------------------------------------------------
 // Node Dependencies
 const nativeUtil = require('util');
