@@ -123,23 +123,25 @@ oauth2Client.getToken(code, (error, tokens) => {
           metadata_mappings : [],
         };
 
-                // Add metadata mapping
-        do {
-          console.log(`\n>>>> Project [${project.key}] - Adding metadata mapping`);
-                    // Create metadata mapping
-          const mapping = {
-            meta  : readlineSync.question('Meta name: '),
-            field : readlineSync.question('Jira field: '),
-          };
+        // Add metadata mapping
+        if (readlineSync.keyInYN('\nDo you want to add metadata mapping?')) {
+          do {
+            console.log(`\n>>>> Project [${project.key}] - Adding metadata mapping`);
+            // Create metadata mapping
+            const mapping = {
+              meta  : readlineSync.question('Meta name: '),
+              field : readlineSync.question('Jira field: '),
+            };
 
-          const meta_types = ['array', 'string', 'options'];
-          mapping.type = meta_types[readlineSync.keyInSelect(meta_types, 'Meta type: ', { cancel: false })];
+            const meta_types = ['array', 'string', 'options'];
+            mapping.type = meta_types[readlineSync.keyInSelect(meta_types, 'Meta type: ', { cancel: false })];
 
-          if (mapping.type === 'options') { mapping.options = readlineSync.question('Meta options (separate by comma): ').split(/ *, */g); }
+            if (mapping.type === 'options') { mapping.options = readlineSync.question('Meta options (separate by comma): ').split(/ *, */g); }
 
-          project.metadata_mappings.push(mapping);
+            project.metadata_mappings.push(mapping);
+          }
+          while (readlineSync.keyInYN('\nAdd another mapping? (This can be edited later)'));
         }
-        while (readlineSync.keyInYN('\nAdd another mapping? (This can be edited later)'));
 
         newMailbox.projects.push(project);
       }
