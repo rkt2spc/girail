@@ -34,7 +34,7 @@ const newGmailSettings = {
     'References',
     'From',
     'Date',
-    'Message-ID',
+    'Message-Id',
     'Subject',
     'To',
   ],
