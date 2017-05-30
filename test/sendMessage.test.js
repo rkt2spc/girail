@@ -25,8 +25,10 @@ compose({
   from    : 'nmtuan.gg@gmail.com',
   to      : 'phuc@fossil.com',
   subject : 'Test script',
-  // text    : 'test email from script',
   html    : 'Click <a href="https://github.com/rocketspacer/girail" target="_blank">here</a> to go to nmtuan project',
+  // references : '<CAA3yBXuQTgXt0MPcWRMURHMnMo98FAvASrtiezHtBdqPGSV2CA@mail.gmail.com>',
+  // inReplyTo  : '<CAA3yBXuQTgXt0MPcWRMURHMnMo98FAvASrtiezHtBdqPGSV2CA@mail.gmail.com>',
+  // text    : 'test email from script',
 }).build((err, mail) => {
   if (err) return console.log(err);
 
