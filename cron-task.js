@@ -20,11 +20,11 @@ module.exports = (cronDone) => {
     //-------------------------
     logger.info('==============================================');
     logger.info(`Processing mailbox <${mailbox.name}>`);
-    mailbox.retrieveUnprocessedMessages((err, messages) => {
+    mailbox.retrieveUnprocessedMessages((retrieve_error, messages) => {
       //-------------------------
-      if (err) {
+      if (retrieve_error) {
         logger.info('Failed to retrieve unprocessed messages');
-        logger.error(err);
+        logger.error(retrieve_error);
         return processNextMailbox();
       }
 
@@ -48,20 +48,20 @@ module.exports = (cronDone) => {
         logger.info('--------------------------------------------------');
         logger.info(`Processing message ${message.id}`);
         message.mailbox = mailbox.name;
-        queue.sendMessage(JSON.stringify(message), (err, data) => {
+        queue.sendMessage(JSON.stringify(message), (enqueue_error, data) => {
           // Can't enqueue
-          if (err) {
-            logger.info('Failed to enqueue message!')
-            logger.error(err);
+          if (enqueue_error) {
+            logger.info('Failed to enqueue message!');
+            logger.error(enqueue_error);
             next();
             return;
           }
           logger.info(`Message ${message.id} enqueued`);
           // Mark message enqueued
-          mailbox.markMessageEnqueued(message, (err) => {
-            if (err) {
+          mailbox.markMessageEnqueued(message, (mark_error) => {
+            if (mark_error) {
               logger.info('Failed to mark message enqueued!');
-              logger.error(err);
+              logger.error(mark_error);
               next();
               return;
             }
@@ -71,13 +71,13 @@ module.exports = (cronDone) => {
         });
       },
       // Final callback
-      (err2) => {
-        if (err2) logger.error(err2);
+      (process_message_error) => {
+        if (process_message_error) logger.error(process_message_error);
         processNextMailbox();
       });
     });
-  }, (err) => {
-    if (err) logger.error(err);
+  }, (process_mailbox_error) => {
+    if (process_mailbox_error) logger.error(process_mailbox_error);
     cronDone();
   });
 };

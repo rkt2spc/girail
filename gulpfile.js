@@ -1,24 +1,25 @@
-var gulp = require('gulp');
-var plugins = require('gulp-load-plugins')();
+//------------------------------------------------------------------------------
+const gulp = require('gulp');
+const plugins = require('gulp-load-plugins')();
 
-gulp.task('consume', function () {
+//------------------------------------------------------------------------------
+gulp.task('consume', () => {
+  const nodemon = plugins.nodemon({
+    script : 'consumer.js',
+    watch  : ['./configs', './credentials'],
+    ext    : 'yaml json',
+  });
 
-    var nodemon = plugins.nodemon({
-        script: 'consumer.js',
-        watch: ['./configs', './credentials'],
-        ext: 'yaml json',
-    });
-
-    return nodemon;
+  return nodemon;
 });
 
-gulp.task('cron', function () {
+//------------------------------------------------------------------------------
+gulp.task('cron', () => {
+  const nodemon = plugins.nodemon({
+    script : 'cron.js',
+    watch  : ['./configs', './credentials'],
+    ext    : 'yaml json',
+  });
 
-    var nodemon = plugins.nodemon({
-        script: 'cron.js',
-        watch: ['./configs', './credentials'],
-        ext: 'yaml json',
-    });
-
-    return nodemon;
+  return nodemon;
 });

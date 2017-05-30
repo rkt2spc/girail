@@ -16,7 +16,7 @@
   "scripts": {
     "precommit": "npm run lint",
     "prepush": "npm run lint",
-    "lint": "eslint --ignore-path .gitignore --cache **/*.js"
+    "lint": "eslint --ignore-path .gitignore --cache **/*.js *.js"
   },
   "engines": {
     "node": "7.9.x",
