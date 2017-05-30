@@ -19,8 +19,9 @@
     "lint": "eslint --ignore-path .gitignore --cache **/*.js *.js"
   },
   "engines": {
-    "node": "7.9.x",
-    "npm": "4.2.x"
+    "node": "7.10.x",
+    "npm": "4.6.x",
+    "mogodb": "3.4"
   },
   "dependencies": {
     "async": "^2.4.1",
