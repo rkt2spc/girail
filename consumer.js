@@ -84,6 +84,9 @@ const app = Consumer.create({
       .then(core.markMessageProcessed)
       .then(utils.logStatus('Mark message processed', 'Done'))
       //-----------------------------------------------------------------
+      .then(core.sendReplyOnIssueCreation)
+      .then(utils.logStatus('Send reply on issue creation', 'Done'))
+      //-----------------------------------------------------------------
       .then(() => {
         // No error happened
         logger.info(`Finished processing message ${gmailMessage.id}`);
