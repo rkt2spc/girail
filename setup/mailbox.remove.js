@@ -19,14 +19,14 @@ const mailboxSettings = configsAdapter.loadMailboxSettings();
 //------------------------------------------------------------------------------
 // Arguments
 const argv = yargs
-    .usage('Usage: $0 -m [mailbox]')
-    .help('h')
-    .alias('h', 'help')
-    .demandOption(['mailbox'])
-    .example('$0 --mailbox foo@mail.com')
-    .alias('m', 'mailbox')
-    .describe('m', 'The mail box you want removed')
-    .argv;
+  .usage('Usage: $0 -m [mailbox]')
+  .help('h')
+  .alias('h', 'help')
+  .demandOption(['mailbox'])
+  .example('$0 --mailbox foo@mail.com')
+  .alias('m', 'mailbox')
+  .describe('m', 'The mail box you want removed')
+  .argv;
 
 //------------------------------------------------------------------------------
 console.log('\n===================================================');

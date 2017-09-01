@@ -105,10 +105,10 @@ oauth2Client.getToken(code, (error, tokens) => {
     (next) => {
       gmail.users.labels.list({ userId: 'me' }, (err, response) => {
         newMailbox.labels = lodash.chain(response.labels)
-                    .filter((l) => gmailSettings.required_labels.includes(l.name))
-                    .keyBy('name')
-                    .mapValues('id')
-                    .value();
+          .filter((l) => gmailSettings.required_labels.includes(l.name))
+          .keyBy('name')
+          .mapValues('id')
+          .value();
 
         next();
       });

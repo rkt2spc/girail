@@ -8,9 +8,9 @@ const mailboxSetting = require('js-yaml').safeLoad(fs.readFileSync(path.resolve(
 const tokens = JSON.parse(Buffer.from(mailboxSetting.tokens, 'base64').toString('utf8'));
 const googleCredentials = require('../credentials/google.credentials.json');
 const oauth2Client = new google.auth.OAuth2(
-    googleCredentials.installed.client_id,
-    googleCredentials.installed.client_secret,
-    googleCredentials.installed.redirect_uris[0]
+  googleCredentials.installed.client_id,
+  googleCredentials.installed.client_secret,
+  googleCredentials.installed.redirect_uris[0]
 );
 oauth2Client.setCredentials(tokens);
 const gmailService = google.gmail({

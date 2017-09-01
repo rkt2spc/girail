@@ -57,30 +57,30 @@ const jira = new JiraApi({
 console.log('\n======================================================');
 console.log('Getting Jira required fields:', newJiraSettings.required_fields);
 jira.listFields()
-    .then((fields) => {
-      fields = fields.filter(f => newJiraSettings.required_fields.includes(f.name));
-      if (fields.length !== newJiraSettings.required_fields.length) {
-        console.log('Not enough Jira required fields, please alert an administrator to create them');
-        return;
-      }
-      console.log('All required fields are present!');
+  .then((fields) => {
+    fields = fields.filter(f => newJiraSettings.required_fields.includes(f.name));
+    if (fields.length !== newJiraSettings.required_fields.length) {
+      console.log('Not enough Jira required fields, please alert an administrator to create them');
+      return;
+    }
+    console.log('All required fields are present!');
 
-      newJiraSettings.fields = lodash.chain(fields)
-            .sortBy('name')
-            .keyBy('name')
-            .mapValues('id')
-            .value();
+    newJiraSettings.fields = lodash.chain(fields)
+      .sortBy('name')
+      .keyBy('name')
+      .mapValues('id')
+      .value();
 
-      console.log('\n======================================================');
-      console.log('Review your Jira settings:');
-      console.log(nativeUtil.inspect(newJiraSettings));
-      console.log('\nReview your Jira credentials:');
-      console.log(nativeUtil.inspect(newJiraCredentials));
-      if (readlineSync.keyInYN('\nIs this okay?')) {
-        configsAdapter.updateJiraSettings(newJiraSettings);
-        console.log('Jira Settings Updated');
-        configsAdapter.updateJiraCredentials(newJiraCredentials);
-        console.log('Jira Credentials Updated');
-      } else { console.log('Cancelled'); }
-    })
-    .catch((err) => console.log(err));
+    console.log('\n======================================================');
+    console.log('Review your Jira settings:');
+    console.log(nativeUtil.inspect(newJiraSettings));
+    console.log('\nReview your Jira credentials:');
+    console.log(nativeUtil.inspect(newJiraCredentials));
+    if (readlineSync.keyInYN('\nIs this okay?')) {
+      configsAdapter.updateJiraSettings(newJiraSettings);
+      console.log('Jira Settings Updated');
+      configsAdapter.updateJiraCredentials(newJiraCredentials);
+      console.log('Jira Credentials Updated');
+    } else { console.log('Cancelled'); }
+  })
+  .catch((err) => console.log(err));
