@@ -8,7 +8,7 @@ async.forever((next) => {
   if (stop) return next('Stopped');
 
   // After a Task done, wait 60 sec before doing next task
-  cronTask(() => setTimeout(() => next(), 30000));
+  cronTask(() => setTimeout(() => next(), 60000));
 }, (err) => process.kill(process.pid, 'SIGUSR2'));
 
 //------------------------------------------------------------------------------
